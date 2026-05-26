@@ -1,0 +1,12 @@
+source leaprc.protein.ff14SB
+source leaprc.gaff2
+source leaprc.water.tip3p
+AIB = loadmol2 ../../../common/params/aib.mol2
+complex = loadpdb ../structures/DPP4_GLP1_WT_tleap.pdb
+solvatebox complex TIP3PBOX 12.0
+addions complex Na+ 0
+addions complex Cl- 0
+charge complex
+saveamberparm complex wt.prmtop wt.inpcrd
+savepdb complex wt_tleap.pdb
+quit

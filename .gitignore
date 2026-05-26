@@ -1,0 +1,46 @@
+# GROMACS output
+*.tpr
+*.edr
+*.trr
+*.xtc
+*.cpt
+*.gro
+*.log
+exps/*/gmx/*/*_gmx.log
+exps/*/gmx/*/#*#
+
+# OpenMM output (large)
+exps/*/md/*/*.dcd
+exps/*/md/*/*.chk
+exps/*/md/*/*.xml
+exps/*/md/*/*_amber.pdb
+exps/*/md/*/*_solvated.pdb
+exps/*/md/*/*_fixed.pdb
+exps/*/md/*/*_log.txt
+
+# tleap output (large)
+exps/*/tleap/*.prmtop
+exps/*/tleap/*.inpcrd
+exps/*/tleap/*_tleap.pdb
+exps/*/tleap/leap.log
+
+# Intermediate structures
+exps/*/structures/1NU*.pdb
+exps/*/structures/DPP4_chainB.pdb
+exps/*/structures/DPP4_GLP1_*.pdb
+exps/*/structures/glp1_*.pdb
+exps/*/structures/DiprotinA.pdb
+exps/*/structures/*.prmtop
+exps/*/structures/leap.log
+
+# Antechamber temp files
+common/params/ANTECHAMBER_*
+common/params/ATOMTYPE.INF
+common/params/sqm.*
+common/params/aib_capped.*
+common/params/aib.frcmod
+
+# Misc
+cc-ds.sh
+__pycache__/
+*.pyc

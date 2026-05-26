@@ -1,0 +1,38 @@
+<ForceField>
+  <Residues>
+    <Residue name="AIB">
+      <!-- Aib: alpha-aminoisobutyric acid (dimethyl-glycine) -->
+      <!-- Backbone: ff14SB generic types, charges from alanine -->
+      <Atom name="N"  type="protein-N"  charge="-0.4157"/>
+      <Atom name="H"  type="protein-H"  charge="0.2719"/>
+      <Atom name="CA" type="protein-CX" charge="0.0341"/>
+      <Atom name="C"  type="protein-C"  charge="0.5973"/>
+      <Atom name="O"  type="protein-O"  charge="-0.5679"/>
+      <!-- Side chain: two methyls on CA (no HA). Charges neutralized (~0 total). -->
+      <Atom name="CB"  type="protein-CT" charge="-0.1721"/>
+      <Atom name="HB1" type="protein-HC" charge="0.0707"/>
+      <Atom name="HB2" type="protein-HC" charge="0.0707"/>
+      <Atom name="HB3" type="protein-HC" charge="0.0707"/>
+      <Atom name="CB2" type="protein-CT" charge="-0.1721"/>
+      <Atom name="HB21" type="protein-HC" charge="0.0707"/>
+      <Atom name="HB22" type="protein-HC" charge="0.0707"/>
+      <Atom name="HB23" type="protein-HC" charge="0.0707"/>
+
+      <Bond atomName1="N" atomName2="H"/>
+      <Bond atomName1="N" atomName2="CA"/>
+      <Bond atomName1="CA" atomName2="C"/>
+      <Bond atomName1="CA" atomName2="CB"/>
+      <Bond atomName1="CA" atomName2="CB2"/>
+      <Bond atomName1="C" atomName2="O"/>
+      <Bond atomName1="CB" atomName2="HB1"/>
+      <Bond atomName1="CB" atomName2="HB2"/>
+      <Bond atomName1="CB" atomName2="HB3"/>
+      <Bond atomName1="CB2" atomName2="HB21"/>
+      <Bond atomName1="CB2" atomName2="HB22"/>
+      <Bond atomName1="CB2" atomName2="HB23"/>
+
+      <ExternalBond atomName="N"/>
+      <ExternalBond atomName="C"/>
+    </Residue>
+  </Residues>
+</ForceField>

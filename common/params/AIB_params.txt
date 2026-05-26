@@ -1,0 +1,6 @@
+# Aib (alpha-aminoisobutyric acid) parameters
+# Generated from antechamber GAFF2 + AM1-BCC
+# For use with ff19SB backbone context
+
+## Charges (AM1-BCC, from capped ACE-AIB-NME)
+  Total: 0.0000
