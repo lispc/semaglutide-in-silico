@@ -17,3 +17,5 @@ pcoupl      = no
 pbc         = xyz
 constraints = h-bonds
 constraint-algorithm = LINCS
+nstlist     = 40
+rlist       = 1.1
