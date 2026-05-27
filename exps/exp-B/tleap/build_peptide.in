@@ -1,0 +1,20 @@
+# tleap: Build GLP-1(7-37) peptide with ALA8 (to be converted to AIB later)
+# Builds both K34 and R34 variants using sequence command
+# sequence command ensures proper N-terminal NH3+ and C-terminal COO-
+
+source leaprc.protein.ff14SB
+source leaprc.gaff2
+
+# B1 sequence: GLP-1(7-37) with K34
+# HIS-AIB-GLU-GLY-THR-PHE-THR-SER-ASP-VAL-SER-SER-TYR-LEU-GLU-GLY-GLN-ALA-ALA-LYS-GLU-PHE-ILE-ALA-TRP-LEU-VAL-LYS-GLY-ARG-GLY
+# Using standard N-terminal (no cap prefix = NH3+), C-terminal (no cap = COO-)
+pep_b1 = sequence { HIS ALA GLU GLY THR PHE THR SER ASP VAL SER SER TYR LEU GLU GLY GLN ALA ALA LYS GLU PHE ILE ALA TRP LEU VAL LYS GLY ARG GLY }
+saveamberparm pep_b1 pep_b1.prmtop pep_b1.inpcrd
+savepdb pep_b1 pep_b1_tleap.pdb
+
+# B2 sequence: GLP-1(7-37) with R34
+pep_b2 = sequence { HIS ALA GLU GLY THR PHE THR SER ASP VAL SER SER TYR LEU GLU GLY GLN ALA ALA LYS GLU PHE ILE ALA TRP LEU VAL ARG GLY ARG GLY }
+saveamberparm pep_b2 pep_b2.prmtop pep_b2.inpcrd
+savepdb pep_b2 pep_b2_tleap.pdb
+
+quit

@@ -1,0 +1,13 @@
+source leaprc.protein.ff14SB
+source leaprc.gaff2
+source leaprc.water.tip3p
+FAH = loadmol2 c18_monoacid_fa3.mol2
+HSA = loadpdb hsa_no_myr.pdb
+complex = combine { HSA FAH }
+solvatebox complex TIP3PBOX 10.0
+addions complex Na+ 0
+addions complex Cl- 0
+charge complex
+saveamberparm complex c18_monoacid.prmtop c18_monoacid.inpcrd
+savepdb complex c18_monoacid_tleap.pdb
+quit

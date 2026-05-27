@@ -1,0 +1,20 @@
+<ROSETTASCRIPTS>
+  <SCOREFXNS>
+    <ScoreFunction name="ref15" weights="ref2015.wts"/>
+  </SCOREFXNS>
+  <MOVERS>
+    <FlexPepDocking name="flexpep" 
+      scorefxn="ref15"
+      peptide_chain="B"
+      receptor_chain="A"
+      lowres_abinitio="false"
+      lowres_preoptimize="false"
+      pep_refine="true"
+      min_only="false"
+      random_phi_psi_at_start="false"
+      sample_best_peptide_plane="false"/>
+  </MOVERS>
+  <PROTOCOLS>
+    <Add mover="flexpep"/>
+  </PROTOCOLS>
+</ROSETTASCRIPTS>

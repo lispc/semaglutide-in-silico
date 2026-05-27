@@ -4,7 +4,7 @@
 >
 > 核心文献：Lau et al., *J. Med. Chem.* **2015**, 58, 7370–7380; Knudsen & Lau, *Front. Endocrinol.* **2019**, 10, 155.
 >
-> 最后更新：2026-05-26
+> 最后更新：2026-05-27
 
 ---
 
@@ -267,6 +267,35 @@ Aib8,Arg34-GLP-1(Lys26-脂链)
 
 ---
 
+## 项目当前进度 (2026-05-27)
+
+### 已完成
+
+| 实验 | 状态 | 关键结果 |
+|------|:---:|---------|
+| **exp-A** | ✓ 完成 | Aib8 双甲基在所有 5 个指标上一致推离 DPP-4 活性位点（催化距离 +1.0 Å, S1 CB→W629 +1.7 Å, 接触数 -49） |
+| Phase 0 基础设施 | ✓ 完成 | ff14SB + GAFF2 + TIP3P 管线, Aib 参数化, GROMACS nstlist=40 修复 |
+
+### 进行中
+
+| 实验 | 状态 | 详情 |
+|------|:---:|------|
+| **exp-C** | ● MD 运行中 | C18 monoacid ×3 replica × 100 ns (GPU 0-2, 242 ns/d), FA3 位点验证 |
+| **exp-B** | ⏸ 暂停 | ECD-肽复合物在所有晶体结构中均分离 25-40 Å，FlexPepDock 无法修复。等待 AF3/Boltz-1 替代方案 |
+
+### 待启动
+
+exp-D (Linker), exp-E (SAR), exp-F (跨膜激活)
+
+### 经验教训
+
+- **GLP-1R ECD + 肽复合物结构不可直接用于 MD**：所有已发表结构（3IOL/4ZGM/6GB1/7KI0）的 ECD 与肽链均分离 >25 Å
+- **FlexPepDock 对长肽无效**：28 残基肽无法通过 refinement 模式桥接 25 Å 间隙（符合 best-practice §13）
+- **antechamber smi/mol2/pdb 输入均失败**：sqm/bondtype 子程序不可用，改为手动构建 GAFF2 mol2
+- **tleap 加载 mol2 时需包含氢原子**：仅提供重原子导致 tleap 不加 H → VDW 重叠 → NaN
+
+---
+
 ## 五、计算资源汇总
 
 | 实验 | 体系数 | 模拟量/体系 | Replica | 总模拟量 | 日历天数 (4 GPU) |
@@ -289,10 +318,10 @@ Aib8,Arg34-GLP-1(Lys26-脂链)
 | 组件 | 选择 | 说明 |
 |------|------|------|
 | 生产引擎 | **OpenMM** 为主，GROMACS 交叉验证 | OpenMM 快 30–50%（best-practice §1） |
-| 蛋白力场 | Amber14SB 或 ff19SB | 经验证适用于 GPCR |
+| 蛋白力场 | **ff14SB**（非 ff19SB） | ff19SB 的 CMAP 类型不支持非标准 Aib 残基 |
 | 水模型 | TIP3P | 与力场配套 |
-| 非标准残基 | AmberTools antechamber + parmchk2 手动参数化 | Aib 可在 Amber 找到；OEG/脂化 Lys 需自定义 |
-| 脂链配体力场 | GAFF2 + AM1-BCC 电荷 | 参考 Liu 2025 的方案 |
+| 非标准残基 | AmberTools tleap + ParmEd 修改 | Aib8: WT→ALA→ParmEd→AIB; 脂化 Lys: GAFF2 手动 mol2 |
+| 脂链配体力场 | GAFF2 + 标准官能团电荷 | antechamber 不可用（sqm/bondtype 子程序失败），手动构建 mol2 |
 | 对接 | LightDock + Rosetta | 多方法交叉验证（best-practice §39） |
 | 结构预测 | AF3 + Boltz-2 + Chai-1 | 用于构建配体-受体复合物初始模型 |
 

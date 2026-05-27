@@ -1,0 +1,21 @@
+# tleap for exp-B B1: ECD + GLP-1(10-37, K34)
+# Using CYX for disulfide cysteines (auto-detected)
+source leaprc.protein.ff14SB
+source leaprc.gaff2
+source leaprc.water.tip3p
+
+complex = loadpdb ../structures/b1_complex_noh.pdb
+
+# Auto-detect disulfide bonds from CYX proximity
+bond complex.46.SG complex.71.SG
+bond complex.62.SG complex.104.SG
+bond complex.85.SG complex.126.SG
+
+solvatebox complex TIP3PBOX 12.0
+addions complex Na+ 0
+addions complex Cl- 0
+charge complex
+
+saveamberparm complex b1.prmtop b1.inpcrd
+savepdb complex b1_tleap.pdb
+quit

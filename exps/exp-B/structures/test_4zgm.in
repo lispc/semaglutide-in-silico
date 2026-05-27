@@ -1,0 +1,12 @@
+source leaprc.protein.ff14SB
+source leaprc.gaff2
+source leaprc.water.tip3p
+complex = loadpdb 4ZGM.pdb
+bond complex.46.SG complex.71.SG
+bond complex.62.SG complex.104.SG
+bond complex.85.SG complex.126.SG
+solvatebox complex TIP3PBOX 10.0
+addions complex Na+ 0
+addions complex Cl- 0
+charge complex
+quit

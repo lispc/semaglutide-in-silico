@@ -1,0 +1,10 @@
+source leaprc.protein.ff14SB
+source leaprc.gaff2
+source leaprc.water.tip3p
+# Do minimal test: just load PDB and build without solvation
+complex = loadpdb b2_complex_noh.pdb
+bond complex.46.SG complex.71.SG
+bond complex.62.SG complex.104.SG
+bond complex.85.SG complex.126.SG
+saveamberparm complex test.prmtop test.inpcrd
+quit
