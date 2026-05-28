@@ -48,11 +48,26 @@
   - PE: −1.066–−1.069×10⁶ kJ/mol（replica 间 <0.3% 差异）
   - 预计 100 ns ×3 完成时间：次日 ~08:00
 
+### C18 monoacid 100 ns 初步分析
+
+- **HSA RMSD**: 2.1-2.2 Å（3 replicas 一致，结构稳定）
+- **FA 羧基锚定**: FA 远端羧基与 ARG482 距离 2.5-3.0 Å，**100 ns 全程稳定**
+- **FA 尾部柔性**: FA 整体 RMSD ~53 Å 来自烷基链自由摆动，非口袋解离
+- **结论**: C18 单酸通过单点羧基-精氨酸盐桥锚定在 FA3，烷基链在溶剂中摆动
+
+### C18 二酸拓扑修复与 MD 启动
+
+- **08:40** 修复 diacid mol2：O1P-O2P 距离 2.16 Å ✓（之前 1.2 Å → tleap "o-o-o" angle 错误）
+- 问题根因：build_diacid.py 中 C1P 原子在写入时丢失，导致 O1P 成为 atom #1 且与自身成键
+- 修复：重写 build_diacid_v2.py，使用显式 heavy/hydro 列表顺序，确保 C1D→C1P 顺序正确
+- **08:44** tleap 构建 C18 二酸拓扑成功（Errors=0, 16 MB prmtop）
+- **08:45** C18 二酸 ×3 replica × 100 ns 启动：GPU 0/1/2, ~230 ns/day
+- 预计完成：今晚 ~21:00
+
 ### 待完成
 
-- C18 monoacid 100 ns 验证完成后的初步分析
-- 修复 diacid mol2 几何（O1P-O2P 距离问题）
-- 构建其他脂链变体 (C16 monoacid, C12-C20 diacids)
+- C18 二酸 100 ns 分析 → 单酸 vs 二酸对比（核心结果）
+- 构建其余脂链变体 (C16 monoacid, C12-C20 diacids)
 
 ---
 
