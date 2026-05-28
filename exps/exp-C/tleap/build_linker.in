@@ -1,0 +1,12 @@
+source leaprc.protein.ff14SB
+source leaprc.gaff2
+source leaprc.water.tip3p
+LFA = loadmol2 linker_fa/linker_c18_fa3.mol2
+complex = loadpdb linker_fa/complex_linker.pdb
+solvatebox complex TIP3PBOX 10.0
+addions complex Na+ 0
+addions complex Cl- 0
+charge complex
+saveamberparm complex linker_c18.prmtop linker_c18.inpcrd
+savepdb complex linker_c18_tleap.pdb
+quit

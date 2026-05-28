@@ -71,18 +71,18 @@ def run(system_name, replica=1, restart=None, nsteps=50_000_000, gpu="0"):
         simulation.context.setPositions(amber.positions)
         # Minimization to resolve clashes
         print("Minimizing...")
-        simulation.minimizeEnergy(maxIterations=2000)
+        simulation.minimizeEnergy(maxIterations=5000)
         state = simulation.context.getState(getEnergy=True)
         print(f"  PE after minimization: {state.getPotentialEnergy().value_in_unit(unit.kilojoules_per_mole):.0f} kJ/mol")
         # Heating
-        print("Heating 0→100 K")
+        print("Heating 0→100 K (NVT)")
         integrator.setTemperature(100); simulation.step(25000)
-        print("Heating 100→310 K")
+        print("Heating 100→310 K (NVT, 50 ps)")
+        integrator.setTemperature(200); simulation.step(25000)
+        integrator.setTemperature(310); simulation.step(25000)
+        print("NPT eq (100 ps, with barostat)")
         system.addForce(mm.MonteCarloBarostat(1*unit.bar, 310*unit.kelvin))
-        for i in range(5):
-            integrator.setTemperature(100 + (i+1)*42); simulation.step(10000)
-        print("NPT eq (200 ps)")
-        integrator.setTemperature(310); simulation.step(100000)
+        simulation.step(50000)
 
     print(f"Production: {nsteps} steps ({nsteps*2e-6:.0f} ns)")
     sim_start = time.time(); steps_done = 0

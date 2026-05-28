@@ -66,8 +66,46 @@
 
 ### 待完成
 
-- C18 二酸 100 ns 分析 → 单酸 vs 二酸对比（核心结果）
-- 构建其余脂链变体 (C16 monoacid, C12-C20 diacids)
+- C18 linker-FA 复合体参数化
+- Linker-C18 二酸 MD 验证
+- 扩展至 C12-C20 linker-FA 变体
+
+## 2026-05-28 — 文献对照与实验升级
+
+### 文献验证
+
+检索了 Liu 2025, Curry 1998, Bhattacharya 2000, Knudsen & Lau 2019, Frimann 2023 等：
+
+| 我们发现 | 文献一致性 |
+|---------|:---:|
+| FA3 是 C18 脂链主要结合位点 | ✓ Liu 2025, Curry 1998 |
+| 远端羧基-ARG482 盐桥是主要锚定力 | ✓ Liu 2025 (R348/R485) |
+| FA 烷基链在 MD 中表现高度柔性 | ✓ Liu 2025 (需 GaMD 增强采样) |
+| **游离 C18 二酸仅单点锚定** (近端羧基游离) | **新发现**: Liu 2025 用的是完整 sema + linker |
+| **Linker 对双点锚定是必需的** | **新发现**: 之前未在文献中明确分离 linker 的角色 |
+
+### 升级决策
+
+将 exp-C 从"游离脂肪酸比较"升级为"γGlu-2×OEG-Cn 复合体比较"：
+- 游离 FA 结果作为基线保留（c18_monoacid, c18_diacid）
+- 新增 linker-FA 复合体体系：linker-C12 ~ linker-C20 diacid + linker-C16/C18 monoacid
+
+### Linker-C18 参数化
+
+- 安装 RDKit (2026.3.2) 用于分子构建
+- SMILES: O=C(O)CCC(N)C(=O)NCCOCCOCC(=O)NCCOCCOCC(=O)(CH2)16COOH
+- ETKDGv3 生成 3D 坐标, MMFF 优化
+- 111 atoms (48 heavy + 63 H), charge=-1 (生理 pH: α-NH3+, α-COO-, distal-COO-)
+- GAFF2 类型分配: c/o/os/n/hn/ho/hc/c3
+- 定位至 FA3: 远端 COOH→MYR 1003 carboxyl, Kabsch 对齐
+
+### Linker-C18 MD 启动 (进行中)
+
+- **19:45** tleap 构建成功 (Errors=0, 86,494 atoms, 16 MB prmtop)
+- 初次运行在 NPT eq 时 NaN（与游离 FA 相同问题）
+- 修复: 增加 minimization (5000 steps) + NVT-only 加热（无 barostat）+ 短 NPT (100 ps)
+- **19:50** linker-C18 ×3 replica 启动：GPU 0/1/2
+- 预计完成：明早 ~08:00
 
 ---
 
