@@ -75,11 +75,22 @@ def run(system_name, replica=1, restart=None, nsteps=50_000_000, gpu="0"):
         state = simulation.context.getState(getEnergy=True)
         print(f"  PE after minimization: {state.getPotentialEnergy().value_in_unit(unit.kilojoules_per_mole):.0f} kJ/mol")
         # Heating
-        print("Heating 0→100 K (NVT)")
+        # Stronger position restraints during heating (prevent NaN from bad initial velocities)
+        k_heat = 50.0  # kJ/mol/nm²
+        heat_force = mm.CustomExternalForce(f"{k_heat} * periodicdistance(x, y, z, x0, y0, z0)^2")
+        heat_force.addPerParticleParameter("x0"); heat_force.addPerParticleParameter("y0"); heat_force.addPerParticleParameter("z0")
+        for atom in amber.atoms:
+            if atom.residue.name not in ('WAT','HOH','SOL','Na+','Cl-'):
+                xyz = amber.positions[atom.idx]
+                heat_force.addParticle(atom.idx, [xyz[0], xyz[1], xyz[2]])
+        hf_idx = system.addForce(heat_force)
+        print(f"Heating 0→100 K (NVT, with {k_heat:.0f} restraint)")
         integrator.setTemperature(100); simulation.step(25000)
         print("Heating 100→310 K (NVT, 50 ps)")
         integrator.setTemperature(200); simulation.step(25000)
         integrator.setTemperature(310); simulation.step(25000)
+        # Remove heating restraint
+        system.removeForce(hf_idx)
         print("NPT eq (100 ps, with barostat)")
         system.addForce(mm.MonteCarloBarostat(1*unit.bar, 310*unit.kelvin))
         simulation.step(50000)
