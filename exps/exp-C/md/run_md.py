@@ -45,11 +45,24 @@ def run(system_name, replica=1, restart=None, nsteps=50_000_000, gpu="0"):
 
     prmtop = f"{EXP_C}/tleap/{system_name}.prmtop"
     inpcrd = f"{EXP_C}/tleap/{system_name}.inpcrd"
+    system_xml = f"{EXP_C}/tleap/{system_name}_system.xml"
 
     print(f"Loading {prmtop}")
     amber = pmd.load_file(prmtop, inpcrd)
-    system = amber.createSystem(nonbondedMethod=app.PME, nonbondedCutoff=1.0*unit.nanometers,
-                                 constraints=app.HBonds, rigidWater=True)
+
+    # Cache system XML to avoid expensive rebuild
+    if os.path.exists(system_xml):
+        print(f"Loading cached system from {system_xml}")
+        with open(system_xml) as f:
+            system = mm.XmlSerializer.deserialize(f.read())
+    else:
+        print("Building system (one-time, may take ~1 min)...")
+        system = amber.createSystem(nonbondedMethod=app.PME, nonbondedCutoff=1.0*unit.nanometers,
+                                     constraints=app.HBonds, rigidWater=True)
+        with open(system_xml, 'w') as f:
+            f.write(mm.XmlSerializer.serialize(system))
+        print(f"System cached to {system_xml}")
+
     system = add_restraints(system, amber)
 
     integrator = mm.LangevinIntegrator(310*unit.kelvin, 1.0/unit.picoseconds, 2.0*unit.femtoseconds)
@@ -69,38 +82,18 @@ def run(system_name, replica=1, restart=None, nsteps=50_000_000, gpu="0"):
             simulation.context.loadCheckpoint(f.read())
     else:
         simulation.context.setPositions(amber.positions)
-        # Minimization to resolve clashes
         print("Minimizing (10k steps)...")
         simulation.minimizeEnergy(maxIterations=10000)
         state = simulation.context.getState(getEnergy=True)
-        pe_min = state.getPotentialEnergy().value_in_unit(unit.kilojoules_per_mole)
-        print(f"  PE after minimization: {pe_min:.0f} kJ/mol")
-
-        # Graduated heating with strong→weak position restraints
-        for k_val, label, temp, steps in [
-            (200.0, "0→10K",   10,  5000),
-            (200.0, "10→100K", 100, 25000),
-            (100.0, "100→200K",200, 25000),
-            (50.0,  "200→310K",310, 25000),
-            (20.0,  "310K relax1",310,25000),
-            (10.0,  "310K relax2",310,25000),
-        ]:
-            rf = mm.CustomExternalForce(f"{k_val} * periodicdistance(x, y, z, x0, y0, z0)^2")
-            rf.addPerParticleParameter("x0"); rf.addPerParticleParameter("y0"); rf.addPerParticleParameter("z0")
-            for atom in amber.atoms:
-                if atom.residue.name not in ('WAT','HOH','SOL','Na+','Cl-'):
-                    xyz = amber.positions[atom.idx]
-                    rf.addParticle(atom.idx, [xyz[0], xyz[1], xyz[2]])
-            rf_idx = system.addForce(rf)
-            integrator.setTemperature(temp * unit.kelvin)
-            print(f"  {label} ({k_val:.0f} kJ/mol/nm², {steps*2e-6*1000:.0f} ps)")
-            simulation.step(steps)
-            system.removeForce(rf_idx)
-
-        print("NPT eq (100 ps, with barostat)")
+        print(f"  PE after minimization: {state.getPotentialEnergy().value_in_unit(unit.kilojoules_per_mole):.0f} kJ/mol")
+        print("Heating 0→100 K (NVT, 50 ps)")
+        integrator.setTemperature(100 * unit.kelvin); simulation.step(25000)
+        print("Heating 100→310 K (NPT, 100 ps)")
         system.addForce(mm.MonteCarloBarostat(1*unit.bar, 310*unit.kelvin))
-        integrator.setTemperature(310)
-        simulation.step(50000)
+        for i in range(5):
+            integrator.setTemperature((100 + (i+1)*42) * unit.kelvin); simulation.step(10000)
+        print("NPT eq (200 ps, 310 K)")
+        integrator.setTemperature(310 * unit.kelvin); simulation.step(100000)
 
     print(f"Production: {nsteps} steps ({nsteps*2e-6:.0f} ns)")
     sim_start = time.time(); steps_done = 0
