@@ -99,13 +99,17 @@
 - GAFF2 类型分配: c/o/os/n/hn/ho/hc/c3
 - 定位至 FA3: 远端 COOH→MYR 1003 carboxyl, Kabsch 对齐
 
-### Linker-C18 MD 启动 (进行中)
+### Linker-C18 NaN 问题诊断与修复
 
-- **19:45** tleap 构建成功 (Errors=0, 86,494 atoms, 16 MB prmtop)
-- 初次运行在 NPT eq 时 NaN（与游离 FA 相同问题）
-- 修复: 增加 minimization (5000 steps) + NVT-only 加热（无 barostat）+ 短 NPT (100 ps)
-- **19:50** linker-C18 ×3 replica 启动：GPU 0/1/2
-- 预计完成：明早 ~08:00
+- **2026-05-28 晚 ~ 2026-05-29 早**：多轮 NaN 调试
+- 第一轮（19:50）：rep 1 跑至 4.9 ns 后 NaN, rep 2/3 在加热阶段 NaN
+  - 根因：全局 charge scaling (+6.75→-1, ×-0.148) 导致电荷符号反转
+- 第二轮（08:27）：改用 GAFF2 原子类型逐一分配电荷 (total=+1.05)
+  - 10 ns 真空测试通过，但 3 reps 仍在 0.3-0.5 ns 时 NaN
+  - 诊断: 初始 PE = **5.9×10¹³ kJ/mol**（RDKit 几何与 HSA 严重 clash）
+- 第三轮（08:50）：10,000 步 minimization + 分级加热（200→10 kJ/mol/nm², 6 阶段 150 ps）
+  - **08:55** linker-C18 ×3 replica 启动：GPU 0/1/2
+  - 预计完成：今晚 ~21:00
 
 ---
 

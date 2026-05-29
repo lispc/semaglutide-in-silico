@@ -70,29 +70,36 @@ def run(system_name, replica=1, restart=None, nsteps=50_000_000, gpu="0"):
     else:
         simulation.context.setPositions(amber.positions)
         # Minimization to resolve clashes
-        print("Minimizing...")
-        simulation.minimizeEnergy(maxIterations=5000)
+        print("Minimizing (10k steps)...")
+        simulation.minimizeEnergy(maxIterations=10000)
         state = simulation.context.getState(getEnergy=True)
-        print(f"  PE after minimization: {state.getPotentialEnergy().value_in_unit(unit.kilojoules_per_mole):.0f} kJ/mol")
-        # Heating
-        # Stronger position restraints during heating (prevent NaN from bad initial velocities)
-        k_heat = 50.0  # kJ/mol/nm²
-        heat_force = mm.CustomExternalForce(f"{k_heat} * periodicdistance(x, y, z, x0, y0, z0)^2")
-        heat_force.addPerParticleParameter("x0"); heat_force.addPerParticleParameter("y0"); heat_force.addPerParticleParameter("z0")
-        for atom in amber.atoms:
-            if atom.residue.name not in ('WAT','HOH','SOL','Na+','Cl-'):
-                xyz = amber.positions[atom.idx]
-                heat_force.addParticle(atom.idx, [xyz[0], xyz[1], xyz[2]])
-        hf_idx = system.addForce(heat_force)
-        print(f"Heating 0→100 K (NVT, with {k_heat:.0f} restraint)")
-        integrator.setTemperature(100); simulation.step(25000)
-        print("Heating 100→310 K (NVT, 50 ps)")
-        integrator.setTemperature(200); simulation.step(25000)
-        integrator.setTemperature(310); simulation.step(25000)
-        # Remove heating restraint
-        system.removeForce(hf_idx)
+        pe_min = state.getPotentialEnergy().value_in_unit(unit.kilojoules_per_mole)
+        print(f"  PE after minimization: {pe_min:.0f} kJ/mol")
+
+        # Graduated heating with strong→weak position restraints
+        for k_val, label, temp, steps in [
+            (200.0, "0→10K",   10,  5000),
+            (200.0, "10→100K", 100, 25000),
+            (100.0, "100→200K",200, 25000),
+            (50.0,  "200→310K",310, 25000),
+            (20.0,  "310K relax1",310,25000),
+            (10.0,  "310K relax2",310,25000),
+        ]:
+            rf = mm.CustomExternalForce(f"{k_val} * periodicdistance(x, y, z, x0, y0, z0)^2")
+            rf.addPerParticleParameter("x0"); rf.addPerParticleParameter("y0"); rf.addPerParticleParameter("z0")
+            for atom in amber.atoms:
+                if atom.residue.name not in ('WAT','HOH','SOL','Na+','Cl-'):
+                    xyz = amber.positions[atom.idx]
+                    rf.addParticle(atom.idx, [xyz[0], xyz[1], xyz[2]])
+            rf_idx = system.addForce(rf)
+            integrator.setTemperature(temp * unit.kelvin)
+            print(f"  {label} ({k_val:.0f} kJ/mol/nm², {steps*2e-6*1000:.0f} ps)")
+            simulation.step(steps)
+            system.removeForce(rf_idx)
+
         print("NPT eq (100 ps, with barostat)")
         system.addForce(mm.MonteCarloBarostat(1*unit.bar, 310*unit.kelvin))
+        integrator.setTemperature(310)
         simulation.step(50000)
 
     print(f"Production: {nsteps} steps ({nsteps*2e-6:.0f} ns)")
