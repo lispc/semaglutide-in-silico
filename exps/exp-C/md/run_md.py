@@ -27,7 +27,7 @@ def parse_args():
 
 def add_restraints(system, amber):
     """Add weak CA restraint on HSA backbone."""
-    ca_force = mm.CustomExternalForce("5.0 * periodicdistance(x, y, z, x0, y0, z0)^2")
+    ca_force = mm.CustomExternalForce("5.0 * ((x-x0)^2 + (y-y0)^2 + (z-z0)^2)")
     ca_force.addPerParticleParameter("x0"); ca_force.addPerParticleParameter("y0"); ca_force.addPerParticleParameter("z0")
     count = 0
     for atom in amber.atoms:
@@ -63,13 +63,16 @@ def run(system_name, replica=1, restart=None, nsteps=50_000_000, gpu="0"):
             f.write(mm.XmlSerializer.serialize(system))
         print(f"System cached to {system_xml}")
 
+    print("Adding restraints...", flush=True)
     system = add_restraints(system, amber)
 
+    print("Creating CUDA context...", flush=True)
     integrator = mm.LangevinIntegrator(310*unit.kelvin, 1.0/unit.picoseconds, 2.0*unit.femtoseconds)
     integrator.setRandomNumberSeed(replica * 42)
     platform = mm.Platform.getPlatformByName('CUDA')
     simulation = app.Simulation(amber.topology, system, integrator, platform,
                                 {'CudaDeviceIndex': gpu, 'CudaPrecision': 'mixed'})
+    print("CUDA context ready", flush=True)
 
     simulation.reporters.append(app.DCDReporter(f"{md_dir}/{system_name}_traj.dcd", 50000))
     simulation.reporters.append(app.StateDataReporter(f"{md_dir}/{system_name}_log.txt", 10000,

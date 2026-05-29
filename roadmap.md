@@ -280,7 +280,7 @@ Aib8,Arg34-GLP-1(Lys26-脂链)
 
 | 实验 | 状态 | 详情 |
 |------|:---:|------|
-| **exp-C** | ● 升级中 | 游离 FA 基线完成 (mono/diacid ×3×100ns)。发现 linker 对双点锚定必要性，升级为 linker-FA 复合体比较 |
+| **exp-C** | ● MD 运行中 | 游离 FA 基线完成。Linker-C18 AM1-BCC 电荷修复成功，3-replica 生产中（234 ns/d） |
 | **exp-B** | ⏸ 暂停 | ECD-肽复合物在所有晶体结构中均分离 25-40 Å，FlexPepDock 无法修复。等待 AF3/Boltz-1 替代方案 |
 
 ### 待启动

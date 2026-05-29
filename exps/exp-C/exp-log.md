@@ -101,15 +101,18 @@
 
 ### Linker-C18 NaN 问题诊断与修复
 
-- **2026-05-28 晚 ~ 2026-05-29 早**：多轮 NaN 调试
-- 第一轮（19:50）：rep 1 跑至 4.9 ns 后 NaN, rep 2/3 在加热阶段 NaN
-  - 根因：全局 charge scaling (+6.75→-1, ×-0.148) 导致电荷符号反转
-- 第二轮（08:27）：改用 GAFF2 原子类型逐一分配电荷 (total=+1.05)
-  - 10 ns 真空测试通过，但 3 reps 仍在 0.3-0.5 ns 时 NaN
-  - 诊断: 初始 PE = **5.9×10¹³ kJ/mol**（RDKit 几何与 HSA 严重 clash）
-- 第三轮（08:50）：10,000 步 minimization + 分级加热（200→10 kJ/mol/nm², 6 阶段 150 ps）
-  - **08:55** linker-C18 ×3 replica 启动：GPU 0/1/2
-  - 预计完成：今晚 ~21:00
+四轮迭代：
+
+1. **全局 charge scaling** (+6.75→-1)：电荷符号反转 → NaN at 0.3-5 ns
+2. **GAFF2 逐原子电荷** (+1.05)：初始 PE 5.9×10¹³ → NaN at 0.3-0.5 ns
+3. **RDKit extended conformer + 分级加热**：PE 改善但仍 NaN at 1.9-11.8 ns
+4. **AM1-BCC 电荷（最终修复）**：
+   - 根因：手工 GAFF2 电荷范围 −0.80~+0.70 过于极化
+   - 修复：antechamber + sqm + AM1-BCC（mol2 输入，中性电荷 −nc 0）
+   - AM1-BCC 电荷范围：−0.35~+0.10（更合理）
+   - **16:15 linker-C18 ×3 replica 启动**：GPU 0/1/2, 234 ns/d
+   - Rep 1 已 7 ns 无 NaN（超越之前最佳 11.8 ns）
+   - 预计完成：明早 ~04:00—06:00
 
 ---
 
