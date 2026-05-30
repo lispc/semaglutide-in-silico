@@ -1,0 +1,12 @@
+# Simplest possible full semaglutide build
+# Just bond Lys26 NZ to LFA C8, leave HZ atoms in place
+source leaprc.protein.ff14SB
+source leaprc.gaff2
+
+pep = sequence { HIS ALA GLU GLY THR PHE THR SER ASP VAL SER SER TYR LEU GLU GLY GLN ALA ALA LYS GLU PHE ILE ALA TRP LEU VAL ARG GLY ARG GLY }
+LFA = loadmol2 linker_fa/linker_c18_fa3.mol2
+sema = combine { pep LFA }
+bond sema.20.NZ sema.32.C8
+saveamberparm sema sema_pep.prmtop sema_pep.inpcrd
+savepdb sema sema_pep.pdb
+quit

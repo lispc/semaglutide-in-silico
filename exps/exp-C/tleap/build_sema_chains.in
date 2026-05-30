@@ -1,0 +1,21 @@
+source leaprc.protein.ff14SB
+source leaprc.gaff2
+source leaprc.water.tip3p
+
+# Build peptide as separate unit, then combine with explicit TER
+pep = sequence { HIS ALA GLU GLY THR PHE THR SER ASP VAL SER SER TYR LEU GLU GLY GLN ALA ALA LYS GLU PHE ILE ALA TRP LEU VAL ARG GLY ARG GLY }
+LFA = loadmol2 linker_fa/linker_c18_fa3.mol2
+HSA = loadpdb hsa_no_myr.pdb
+
+# Save a combined PDB with TER between components
+savepdb pep pep_only.pdb
+savepdb LFA lfa_only.pdb
+savepdb HSA hsa_only.pdb
+
+# Manually build combined PDB with chain IDs
+# but tleap can't easily set chain IDs...
+
+# Alternative: use the combined approach but save peptide and HSA separately
+# then use ParmEd to identify them by chain
+
+quit

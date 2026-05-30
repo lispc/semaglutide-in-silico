@@ -118,3 +118,15 @@
 
 *维护者：Claude Code*
 *最后更新：2026-05-27*
+
+### 综合分析与下一步
+
+- **9 条 100 ns 轨迹完成**：游离 mono ×3, 游离 diacid ×3, linker-C18 ×3
+- **游离 FA**：远端 COO⁻ 稳定锚定 ARG482（2.8±0.0 Å）
+- **Linker-C18**：远端 COO⁻ 从 FA3 逃逸（32.2±12.3 Å），γGlu NH₃⁺ 亲水拖出
+- **Full sema**：16 轮迭代全部 NaN/过热，restraint 方案不可行
+- **ACE-capped linker**（进行中）：ACE 封端消除 +1 电荷，AM1-BCC 运行中
+
+---
+*维护者：Claude Code*
+*最后更新：2026-05-30*
