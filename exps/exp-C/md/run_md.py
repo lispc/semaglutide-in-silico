@@ -50,20 +50,9 @@ def run(system_name, replica=1, restart=None, nsteps=50_000_000, gpu="0"):
     print(f"Loading {prmtop}")
     amber = pmd.load_file(prmtop, inpcrd)
 
-    # Cache system XML to avoid expensive rebuild
-    if os.path.exists(system_xml):
-        print(f"Loading cached system from {system_xml}")
-        with open(system_xml) as f:
-            system = mm.XmlSerializer.deserialize(f.read())
-    else:
-        print("Building system (one-time, may take ~1 min)...")
-        system = amber.createSystem(nonbondedMethod=app.PME, nonbondedCutoff=1.0*unit.nanometers,
-                                     constraints=app.HBonds, rigidWater=True)
-        with open(system_xml, 'w') as f:
-            f.write(mm.XmlSerializer.serialize(system))
-        print(f"System cached to {system_xml}")
-
-    print("Adding restraints...", flush=True)
+    # Build system fresh (XML caching unreliable with restraint forces)
+    system = amber.createSystem(nonbondedMethod=app.PME, nonbondedCutoff=1.0*unit.nanometers,
+                                 constraints=app.HBonds, rigidWater=True)
     system = add_restraints(system, amber)
 
     print("Creating CUDA context...", flush=True)

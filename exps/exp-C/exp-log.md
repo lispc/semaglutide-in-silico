@@ -130,3 +130,30 @@
 ---
 *维护者：Claude Code*
 *最后更新：2026-05-30*
+
+## 2026-05-30 — ACE-linked linker 参数化与 MD 启动
+
+### ACE-linker 设计
+
+- 假设：linker-C18 从 FA3 逃逸（32.2 Å）是因为 γGlu N 端 NH₃⁺ 的亲水性拖出
+- ACE 封端（CH₃-CO-NH-）消除 +1 电荷，净电荷 −2（两个 COO⁻）
+- RDKit 构建 114 atoms, AM1-BCC（−nc −2, total=−2.00, range −0.40~+0.10）
+- 定位 FA3（Kabsch 对齐 MYR 1003, min dist 15.2 Å）
+- tleap 构建成功（Errors=0, 86,447 atoms, 16 MB prmtop）
+
+### XML 缓存问题修复
+
+- 发现：系统 XML 反序列化（31 MB）后 addForce 会 hang（CPU 0%, GPU 100% 无进展）
+- 根因：反序列化的 System 对象在添加 CustomExternalForce 时内部 reindex 超时或死锁
+- 修复：去掉 XML 缓存，每次从 prmtop 重建系统（createSystem 仅 3s vs 40+s 缓存加载）
+- 此修复适用于所有后续 MD 运行
+
+### ACE-linker MD 启动
+
+- **13:28** linker_ace ×3 replica 启动：GPU 0/1/2, ~190-227 ns/d
+- Rep 1: T=308.6K, PE=−1.07×10⁶, 无 NaN
+- 预计完成：明早 ~06:00
+
+---
+*维护者：Claude Code*
+*最后更新：2026-05-30*
