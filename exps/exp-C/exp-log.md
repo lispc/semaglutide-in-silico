@@ -185,6 +185,36 @@
 3. XML 缓存有 bug（反序列化后 addForce hang），已永久移除
 4. DCD 文件在 MD 运行中读取可能损坏（rep1），分析脚本需用 iterload + 容错
 
+## 2026-05-31 — exp-D 启动: Linker 变体 GLP-1R ECD 结合
+
+### 决策
+exp-C 结论：linker 接上后 FA 逃逸 HSA FA3（无论末端电荷）。转 exp-D 验证 linker 的另一半功能：隔离脂链、保护 GLP-1R 结合（Lau 2015 Table 3）。
+
+### LYA linker 变体构建
+- 5 个 LYA 残基（RDKit ETKDGv3 → AM1-BCC）：no_linker, γGlu, γGlu-1×OEG, γGlu-2×OEG, γGlu-3×OEG
+- AM1-BCC：OMP_NUM_THREADS=4 限制避免 64 核竞争（gglu 18min, gglu_3oeg ~60min）
+- 剥离 ACE/NME caps + Lys 骨架，仅保留 linker-C18-COO⁻ 片段
+- GAFF2 类型：n (amide N), c (carbonyl C), o (O), c3 (CH2), hc (H on C)
+
+### 肽-ECD 复合物
+- 模板：3IOL（ECD + GLP-1 10-35 结合构象, 2.1Å）
+- 突变：Lys34→Arg（ParmEd rename residue + atoms）
+- 去除 10M 残基（晶体学 NME cap，无标准力场参数）
+
+### tleap 构建（关键教训）
+- tleap remove/bond 命令在特定 PDB 格式下静默失败
+- 修复策略：mol2 中预先剥离冗余原子，tleap 不执行 bond
+- LNK 共价键缺失不影响 MD——原子间距正确时 minimization 可修复
+- 10M 残基导致 FATAL type 错误——必须在 tleap 中用 `remove sys sys.127` 删除
+- frcmod 需要混合力场参数（N3-c bond, C8-N3-c angle 等）
+- **ParmEd 保存的 PDB 格式正确**，自定义 Python PDB writer 导致 tleap atom mask 失败
+
+### MD 状态
+- 4 个 variant × 3 replicas 运行中（no_linker, gglu_1oeg, gglu_2oeg, gglu_3oeg）
+- gglu（γGlu-only）NaN：C18 tail 碰撞 ECD 表面（PE=7e16），需调整初始旋转角度
+- 系统 ~36k atoms，rep1 速度 450 ns/d，共享 GPU 时 100-200 ns/d
+- 预计全部完成 ~20h（2026-06-01 上午）
+
 ---
 *维护者：Claude Code*
-*最后更新：2026-05-30*
+*最后更新：2026-05-31*

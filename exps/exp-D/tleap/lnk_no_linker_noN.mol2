@@ -1,0 +1,8 @@
+@<TRIPOS>MOLECULE
+LNK
+    71     0 0 0 0
+SMALL
+GAFF2
+linker no N
+
+@<TRIPOS>ATOM

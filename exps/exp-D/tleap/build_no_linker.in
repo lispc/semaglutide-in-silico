@@ -1,0 +1,18 @@
+# tleap for exp-D: no_linker
+source leaprc.protein.ff14SB
+source leaprc.gaff2
+source leaprc.water.tip3p
+loadAmberParams frcmod.ionsjc_tip3p
+
+# Load combined PDB (with CONECT for NZ-C bond)
+sys = loadPdb combined_no_linker.pdb
+
+# Solvate
+solvateOct sys TIP3PBOX 10.0
+addIonsRand sys Na+ 0 Cl- 0
+
+check sys
+
+saveAmberParm sys no_linker.prmtop no_linker.inpcrd
+savePdb sys no_linker_solvated.pdb
+quit

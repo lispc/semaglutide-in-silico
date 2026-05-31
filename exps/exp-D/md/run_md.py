@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+"""Production MD for exp-D: ECD + peptide + linker variants."""
+import sys, os, argparse, time
+import numpy as np
+import openmm as mm
+import openmm.app as app
+import openmm.unit as unit
+import parmed as pmd
+
+REPO = "/home/scroll/personal/semaglutide-in-silico"
+EXP_D = f"{REPO}/exps/exp-D"
+
+def parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument("--system", required=True)
+    p.add_argument("--replica", type=int, default=1)
+    p.add_argument("--gpu", type=str, default="0")
+    p.add_argument("--nsteps", type=int, default=50_000_000)
+    return p.parse_args()
+
+def run(system_name, replica=1, nsteps=50_000_000, gpu="0"):
+    md_dir = f"{EXP_D}/md/{system_name}/rep{replica}"
+    os.makedirs(md_dir, exist_ok=True)
+
+    prmtop = f"{EXP_D}/tleap/{system_name}.prmtop"
+    inpcrd = f"{EXP_D}/tleap/{system_name}.inpcrd"
+
+    print(f"Loading {prmtop}")
+    amber = pmd.load_file(prmtop, inpcrd)
+    print(f"  Atoms: {len(amber.atoms)}, Residues: {len(amber.residues)}")
+
+    system = amber.createSystem(nonbondedMethod=app.PME, nonbondedCutoff=1.0*unit.nanometers,
+                                 constraints=app.HBonds, rigidWater=True)
+
+    # Add weak CA restraint on ECD/peptide backbone
+    ca_force = mm.CustomExternalForce("5.0 * ((x-x0)^2 + (y-y0)^2 + (z-z0)^2)")
+    ca_force.addPerParticleParameter("x0"); ca_force.addPerParticleParameter("y0")
+    ca_force.addPerParticleParameter("z0")
+    count = 0
+    for atom in amber.atoms:
+        if atom.residue.name not in ('WAT','HOH','SOL','Na+','Cl-','LNK') and atom.name == 'CA':
+            xyz = amber.positions[atom.idx]
+            ca_force.addParticle(atom.idx, [xyz[0], xyz[1], xyz[2]])
+            count += 1
+    if count > 0:
+        system.addForce(ca_force)
+        print(f"Restraints: {count} CA")
+
+    print("Creating CUDA context...", flush=True)
+    integrator = mm.LangevinIntegrator(310*unit.kelvin, 1.0/unit.picoseconds, 2.0*unit.femtoseconds)
+    integrator.setRandomNumberSeed(replica * 42)
+    platform = mm.Platform.getPlatformByName('CUDA')
+    simulation = app.Simulation(amber.topology, system, integrator, platform,
+                                {'CudaDeviceIndex': gpu, 'CudaPrecision': 'mixed'})
+    print("CUDA context ready", flush=True)
+
+    simulation.reporters.append(app.DCDReporter(f"{md_dir}/{system_name}_traj.dcd", 50000))
+    simulation.reporters.append(app.StateDataReporter(f"{md_dir}/{system_name}_log.txt", 10000,
+        step=True, time=True, potentialEnergy=True, kineticEnergy=True, temperature=True, volume=True, density=True, speed=True))
+    simulation.reporters.append(app.CheckpointReporter(f"{md_dir}/{system_name}_checkpoint.chk", 500000))
+
+    simulation.context.setPositions(amber.positions)
+    print("Minimizing...")
+    simulation.minimizeEnergy(maxIterations=10000)
+    state = simulation.context.getState(getEnergy=True)
+    print(f"  PE: {state.getPotentialEnergy().value_in_unit(unit.kilojoules_per_mole):.0f} kJ/mol")
+
+    print("Heating 0→100 K (NVT, 50 ps)")
+    integrator.setTemperature(100 * unit.kelvin); simulation.step(25000)
+    print("Heating 100→310 K (NPT, 100 ps)")
+    system.addForce(mm.MonteCarloBarostat(1*unit.bar, 310*unit.kelvin))
+    for i in range(5):
+        integrator.setTemperature((100 + (i+1)*42) * unit.kelvin); simulation.step(10000)
+    print("NPT eq (200 ps, 310 K)")
+    integrator.setTemperature(310 * unit.kelvin); simulation.step(100000)
+    print("NPT eq done, starting production", flush=True)
+
+    sim_start = time.time(); steps_done = 0
+    while steps_done < nsteps:
+        chunk = min(500000, nsteps - steps_done)
+        simulation.step(chunk); steps_done += chunk
+        elapsed = time.time() - sim_start
+        ns_done = steps_done * 2e-6; ns_day = ns_done / (elapsed / 86400)
+        remaining = (nsteps - steps_done) * 2e-6 / ns_day * 24 if ns_day > 0 else 0
+        print(f"[{time.strftime('%H:%M:%S')}] {ns_done:.0f}/{nsteps*2e-6:.0f} ns ({ns_day:.0f} ns/d, ~{remaining:.0f}h)")
+
+    print(f"Done! {((time.time()-sim_start)/3600):.1f}h")
+
+if __name__ == "__main__":
+    args = parse_args()
+    run(args.system, args.replica, args.nsteps, args.gpu)

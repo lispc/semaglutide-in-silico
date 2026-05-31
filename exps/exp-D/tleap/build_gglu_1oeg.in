@@ -1,0 +1,27 @@
+# tleap input for exp-D: gglu_1oeg
+source leaprc.protein.ff14SB
+source leaprc.gaff2
+source leaprc.water.tip3p
+loadAmberParams frcmod.ionsjc_tip3p
+
+# Load ECD + peptide complex
+complex = loadPdb ecd_pep.pdb
+
+# Load LYA linker
+LYA = loadMol2 gglu_1oeg_bcc.mol2
+
+# Bond LYA amide C to Lys26 NZ
+# Find Lys26 in chain B
+bond complex.116.NZ LYA.1.N
+bond complex.116.NZ LYA.1.C
+
+# Remove H atoms that would clash
+# Lys26 HZ1/HZ2/HZ3 are removed automatically by bond
+# LYA amide N loses one H
+
+# Solvate
+solvateOct complex TIP3PBOX 10.0
+addIonsRand complex Na+ 0 Cl- 0
+
+saveAmberParm complex gglu_1oeg.prmtop gglu_1oeg.inpcrd
+quit
