@@ -90,3 +90,54 @@ exp-C 结论：linker 接上后 FA 逃逸 HSA FA3（无论末端电荷）。转 
 
 *维护者：Claude Code*
 *最后更新：2026-06-01*
+
+## 2026-06-01 — MD 完成与首轮分析
+
+### 完成状态
+- 12/15 replica 完成, gglu rep1 重开 GPU 3 恢复正常速度
+
+### 首轮分析：linker 变体无显著差异
+
+| Variant | EC50 (pM) | CA RMSD (A) | Tail-Prot (A) | NZ-C (A) |
+|---------|-----------|-------------|---------------|----------|
+| No linker | 269 | 2.2+-0.1 | 5.9+-0.1 | 14.4+-2.7 |
+| gGlu-1xOEG | 4.8 | 2.2+-0.0 | 6.0+-0.2 | 14.6+-3.0 |
+| gGlu-2xOEG | 6.2 | 2.0+-0.1 | 5.8+-1.2 | 14.6+-3.0 |
+| gGlu-3xOEG | 27.7 | 2.0+-0.2 | 5.8+-1.0 | 14.1+-3.0 |
+
+**核心发现**: NZ-C 距离 ~14A -> 酰胺键未形成。LNK 靠非键作用浮在肽链附近，linker 差异被掩盖。
+
+**根因**: tleap bond 命令静默失败; ParmEd bond 添加因缺少 BondType 对象失败。
+
+### 修复计划
+- ParmEd BondType(427.0, 1.38) 创建正确 NZ-C 酰胺键
+- 单 replica 验证: NZ-C ~1.4A -> 变体间有趋势 -> 扩展 3 replica
+
+---
+*维护者：Claude Code*
+*最后更新：2026-06-01*
+
+## 2026-06-01 — ParmEd bond 修复成功
+
+### 修复方法
+- tleap `bond` 命令静默失败导致 NZ-C 酰胺键缺失（NZ-C ~14 Å）
+- ParmEd 修复：删除 HZ 原子 + 距离检测 LNK 内部键 + BondType 创建 NZ-C 酰胺键
+- BondType(427.0 kcal/mol/A², 1.38 A) 匹配 N3-c amide bond
+
+### 修复后结果
+| Variant | PE after min | NZ-C after min | NZ-C production |
+|---------|-------------|:---:|:---:|
+| no_linker | -588,287 | 1.38 A | 1.36-1.44 A（5ns 稳定） |
+| gglu | -574,610 | 1.38 A | 测试中 |
+| gglu_1oeg | -598,121 | 1.39 A | 测试中 |
+| gglu_2oeg | -578,083 | 1.38 A | 测试中 |
+| gglu_3oeg | -582,262 | 1.39 A | 测试中 |
+
+全部 5 个变体 NZ-C = 1.38-1.39 A（正确酰胺键），PE 正常，无 NaN。
+
+### 下一步
+- 单 replica 10ns 测试确认 NZ-C 稳定 → 全 5 变体 ×3 replica 100ns 生产
+
+---
+*维护者：Claude Code*
+*最后更新：2026-06-01*
