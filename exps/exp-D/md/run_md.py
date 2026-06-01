@@ -59,6 +59,9 @@ def run(system_name, replica=1, nsteps=50_000_000, gpu="0"):
         step=True, time=True, potentialEnergy=True, kineticEnergy=True, temperature=True, volume=True, density=True, speed=True))
     simulation.reporters.append(app.CheckpointReporter(f"{md_dir}/{system_name}_checkpoint.chk", 500000))
 
+    # Add barostat BEFORE Simulation context creation
+    system.addForce(mm.MonteCarloBarostat(1*unit.bar, 310*unit.kelvin))
+
     simulation.context.setPositions(amber.positions)
     print("Minimizing...")
     simulation.minimizeEnergy(maxIterations=10000)
@@ -68,7 +71,6 @@ def run(system_name, replica=1, nsteps=50_000_000, gpu="0"):
     print("Heating 0→100 K (NVT, 50 ps)")
     integrator.setTemperature(100 * unit.kelvin); simulation.step(25000)
     print("Heating 100→310 K (NPT, 100 ps)")
-    system.addForce(mm.MonteCarloBarostat(1*unit.bar, 310*unit.kelvin))
     for i in range(5):
         integrator.setTemperature((100 + (i+1)*42) * unit.kelvin); simulation.step(10000)
     print("NPT eq (200 ps, 310 K)")
