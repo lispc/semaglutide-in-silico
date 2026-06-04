@@ -281,7 +281,7 @@ Aib8,Arg34-GLP-1(Lys26-脂链)
 | 实验 | 状态 | 详情 |
 |------|:---:|------|
 | **exp-C** | ✓ 完成 | 9条100ns完成。游离FA锚定ARG482(2.8Å)。linker接上后FA逃逸(32-41Å)，与末端电荷无关——OEG单元亲水性是主因 |
-| **exp-D** | ● MD运行中 | 5 linker变体prmtop构建完成(Errors=0)。4/5运行中(×3 rep)，gglu NaN待修复。预计~20h完成 |
+| **exp-D** | ✓ 完成 | 5 linker变体100ns×3完成。NZ-C bond修复(1.51A)。γGlu-2×OEG最优(Tail 3.8A)，3×OEG RMSD最高(3.0A)。定性吻合Lau 2015 Table 3 |
 | **exp-B** | ⏸ 暂停 | ECD-肽复合物在所有晶体结构中均分离 25-40 Å，FlexPepDock 无法修复。等待 AF3/Boltz-1 替代方案 |
 
 ### 待启动

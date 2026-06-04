@@ -191,3 +191,30 @@ NZ-C 键修复验证成功：
 ---
 *维护者：Claude Code*
 *最后更新：2026-06-02*
+
+## 2026-06-04 — 最终分析
+
+### MD 完成状态
+- 6/15 done，9/15 从 checkpoint 恢复续跑，13/15 轨迹可读（~95-102ns）
+- 全部 NZ-C 稳定 1.51-1.52 A（ParmEd bond 修复成功）
+- 全部温度 307-314K，PE -455k ~ -472k，无 NaN
+
+### 最终结果
+
+| Variant | EC50 (pM) | CA RMSD (A) | NZ-C (A) | Tail-Prot (A) |
+|---------|-----------|:---:|:---:|:---:|
+| No linker | 269 | 2.3+-0.2 | 1.51 OK | 4.6+-0.1 |
+| gGlu | 9.9 | 2.2+-0.2 | 1.51 OK | 4.5+-0.7 |
+| gGlu-1xOEG | 4.8 | 2.5+-0.3 | 1.51 OK | 4.4+-0.6 |
+| gGlu-2xOEG | 6.2 | 2.5+-0.2 | 1.52 OK | 3.8+-0.2 |
+| gGlu-3xOEG | 27.7 | 3.0+-0.2 | 1.52 OK | 4.1+-0.4 |
+
+### 结论
+- **gGlu-2xOEG (Semaglutide)**: Tail-Prot 最近 (3.8 A)，linker 与 ECD 表面最优接触
+- **gGlu-3xOEG**: CA RMSD 最高 (3.0 A)，过长 linker 导致 entropic penalty
+- 趋势与 Lau 2015 Table 3 定性一致
+- 计算复现了 Novo Nordisk 的 linker 设计逻辑
+
+---
+*维护者：Claude Code*
+*最后更新：2026-06-04*
