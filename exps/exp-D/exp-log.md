@@ -209,7 +209,18 @@ NZ-C 键修复验证成功：
 | gGlu-2xOEG | 6.2 | 2.5+-0.2 | 1.52 OK | 3.8+-0.2 |
 | gGlu-3xOEG | 27.7 | 3.0+-0.2 | 1.52 OK | 4.1+-0.4 |
 
-### 结论
+> ⚠️ **SUPERSEDED 2026-06-06**: 以下结论被 review `docs/reviews/claude-Jun06.md` 判定为"被数据严重高估"。
+>
+> **问题**:
+> 1. 变体间 CA RMSD 差异（2.2–3.0 Å）在 ±SD 内大量重叠，趋势不单调（1×OEG RMSD 2.5 > gGlu 2.2）。
+> 2. Tail-Prot "最优"差异仅 0.2–0.8 Å，未报告 replica 间 CV，未做 correlated t-test。
+> 3. 承诺的 MM-GBSA 结合自由能未计算。
+> 4. 实际模拟量 ~95–102 ns，为承诺 500 ns 的 ~1/5。
+> 5. 2×OEG 的"最优"基于裸 EC50，但司美格鲁肽选 2×OEG 的真正依据是 BR ratio（需 HSA 端），而本体系无 HSA。
+>
+> **修正后的表述**：初步几何趋势（3×OEG RMSD 略高、2×OEG tail 距离略近）与 Lau 2015 Table 3 方向一致，但**当前数据不足以宣称统计显著或"复现设计逻辑"**。
+
+### 结论（原始 — 见上方 SUPERSEDED 标注）
 - **gGlu-2xOEG (Semaglutide)**: Tail-Prot 最近 (3.8 A)，linker 与 ECD 表面最优接触
 - **gGlu-3xOEG**: CA RMSD 最高 (3.0 A)，过长 linker 导致 entropic penalty
 - 趋势与 Lau 2015 Table 3 定性一致

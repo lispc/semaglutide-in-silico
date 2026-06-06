@@ -61,12 +61,16 @@ exp-D/
 2. **LNK 无共价键**：tleap bond 命令静默失败，LNK 原子靠非键相互作用维持（不影响 MD 稳定性）
 3. **Arg34 突变**：Lys34→Arg 通过 tleap 模板补全，胍基几何为近似值
 
-## 成功判据
+> ⚠️ **SUPERSEDED 2026-06-06**: 当前数据不足以支撑以下强结论。实际模拟量 ~100 ns（非承诺的 500 ns），几何指标差异在误差棒内重叠（CA RMSD 2.2–3.0 Å，Tail-Prot 差异 0.2–0.8 Å），无统计检验（correlated t-test）、无 MM-GBSA。详见 review `docs/reviews/claude-Jun06.md` §3.1。
+>
+> 下表保留为原始预期，但当前应解读为：**初步几何趋势与 Lau 2015 Table 3 方向一致，但统计显著性未确立。**
+
+## 成功判据（原始预期 — 见上方降级说明）
 
 - 无 linker 体系：ECD RMSD 最高，C18 tail 紧贴 ECD 表面
 - γGlu-2×OEG：ECD RMSD 最低，C18 tail 远离 ECD
 - 3×OEG：ECD 界面轻微不稳定（entropic penalty）
-- 整体趋势与 Lau 2015 Table 3 EC50 数据定性一致
+- 整体趋势与 Lau 2015 Table 3 EC50 数据定性一致（**待统计验证**）
 
 ---
 

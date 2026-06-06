@@ -53,7 +53,7 @@
 | 参数 | 设定 |
 |------|------|
 | 引擎 | **OpenMM 8.5.1**（env: `gmx`） |
-| 力场 | **ff19SB** + TIP3P |
+| 力场 | **ff14SB** + TIP3P |
 | 非标准残基 Aib | GAFF2 + AM1-BCC 电荷（通过 AmberTools antechamber 参数化） |
 | 体系大小 | ~110–140k atoms（DPP-4 ~160 kDa + 31-mer 肽 + 水 + 0.1 M NaCl） |
 | 温度 | **310 K**（生理温度，Langevin thermostat） |

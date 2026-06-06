@@ -1,7 +1,18 @@
 #!/usr/bin/env python3
-"""Full 200 ns analysis: RMSD, catalytic distance, contacts, S1 pocket geometry, WT vs Aib8."""
-import mdtraj as md, numpy as np, os
+"""Full 200 ns analysis: RMSD, catalytic distance, contacts, S1 pocket geometry, WT vs Aib8.
+
+STATISTICAL LIMITATIONS (2026-06-06):
+- Current analysis reports mean±std on raw frames. MD trajectories are autocorrelated.
+- Added median+IQR and effective sample size (n_eff) via common.lib.stats.
+- dt is now derived from DCD timestamps instead of hard-coded 0.1 ns.
+- This is a single-replica analysis. Replica CV and correlated t-test require n≥3 replicas.
+"""
+import mdtraj as md, numpy as np, os, sys
 import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
+
+REPO_ROOT = "/home/scroll/personal/semaglutide-in-silico"
+sys.path.insert(0, f"{REPO_ROOT}/common/lib")
+import stats
 
 REPO = "/home/scroll/personal/semaglutide-in-silico"; OUT = f"{REPO}/exps/exp-A/analysis"
 os.makedirs(OUT, exist_ok=True)
@@ -16,8 +27,8 @@ for label in ["wt", "aib8"]:
     t = md.load(dcd, top=prmtop)
     half = t.n_frames // 2
     t = t[half:]  # last 100 ns
-    dt = 0.1  # ns per frame
-    print(f"  {t.n_frames} frames ({t.n_frames*dt:.0f} ns)")
+    dt = (t.time[1] - t.time[0]) / 1000.0 if t.n_frames > 1 else 0.1  # ns per frame
+    print(f"  {t.n_frames} frames ({t.n_frames*dt:.0f} ns), dt={dt:.3f} ns/frame")
 
     # Selections
     dpp4_bb = t.topology.select("resid >= 0 and resid <= 727 and backbone")
@@ -86,7 +97,13 @@ for metric, fmt, name in [
     wm, ws = results['wt'][metric].mean(), results['wt'][metric].std()
     am, as_ = results['aib8'][metric].mean(), results['aib8'][metric].std()
     delta = am - wm
+    # Add median/IQR/n_eff
+    sw = stats.summarize(results['wt'][metric], name=f"WT {metric}")
+    sa = stats.summarize(results['aib8'][metric], name=f"Aib8 {metric}")
     print(f"  {name:<35s} {wm:{fmt}}±{ws:{fmt}} {am:{fmt}}±{as_:{fmt}} {delta:+{fmt}}")
+    print(f"    median/IQR: WT={sw['median']:{fmt}} [{sw['q25']:{fmt}},{sw['q75']:{fmt}}] "
+          f"Aib8={sa['median']:{fmt}} [{sa['q25']:{fmt}},{sa['q75']:{fmt}}] "
+          f"n_eff={sw['n_eff']:.0f}/{sa['n_eff']:.0f}")
 
 # S1 pocket distances
 print(f"  {'-'*70}")

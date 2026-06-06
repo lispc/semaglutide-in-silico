@@ -1,8 +1,21 @@
 #!/usr/bin/env python3
-"""Compare 4 linker variants: ECD stability, C18-ECD distance, linker dynamics."""
+"""Compare 4 linker variants: ECD stability, C18-ECD distance, linker dynamics.
+
+STATISTICAL LIMITATIONS (2026-06-06):
+- Current script reports mean±std on autocorrelated MD frames. This overstates precision.
+- Added median+IQR and effective sample size (n_eff) via common.lib.stats.
+- Replica CV is now reported, but n=3 is still marginal for between-replica inference.
+- No correlated t-test yet — significance claims must wait for n_eff-corrected testing.
+- dt_ns is now derived from DCD timestamps instead of hard-coded 0.1 ns.
+"""
 import mdtraj as md, numpy as np, matplotlib
 matplotlib.use('Agg'); import matplotlib.pyplot as plt
 import os, sys
+
+# Add project lib to path
+REPO_ROOT = "/home/scroll/personal/semaglutide-in-silico"
+sys.path.insert(0, f"{REPO_ROOT}/common/lib")
+import stats
 
 REPO = "/home/scroll/personal/semaglutide-in-silico"
 EXP_D = f"{REPO}/exps/exp-D"
@@ -90,19 +103,39 @@ for vname in VARIANTS:
         else:
             nz_c = np.zeros(t.n_frames)
 
+        # Derive dt from DCD timestamps instead of hard-coding
+        dt_ns = (t.time[1] - t.time[0]) / 1000.0 if t.n_frames > 1 else 0.1
+
         results[vname][rep] = {
             'ca_rmsd': ca_rmsd, 'tail_prot_dist': tail_prot_dist,
             'ee_dist': ee_dist, 'nz_c': nz_c, 'half': half, 'nframes': t.n_frames,
-            'time_ns': np.arange(t.n_frames) * 0.1  # 100ps per frame
+            'dt_ns': dt_ns,
+            'time_ns': np.arange(t.n_frames) * dt_ns
         }
 
-        # Stats (equilibrated only)
+        # Stats (equilibrated only) — upgraded with median, IQR, n_eff
         h = half
-        print(f"  CA RMSD:    {ca_rmsd[h:].mean():.2f}±{ca_rmsd[h:].std():.2f} Å")
-        print(f"  Tail-prot:  {tail_prot_dist[h:].mean():.2f}±{tail_prot_dist[h:].std():.2f} Å")
-        print(f"  NZ-C:     {nz_c[h:].mean():.2f}±{nz_c[h:].std():.2f} Å")
+        for arr, label in [(ca_rmsd[h:], 'CA RMSD'), (tail_prot_dist[h:], 'Tail-prot'), (nz_c[h:], 'NZ-C')]:
+            s = stats.summarize(arr, name=label)
+            print(f"  {stats.format_summary(s)}")
+        print(f"  (mean±std for compatibility: CA={ca_rmsd[h:].mean():.2f}±{ca_rmsd[h:].std():.2f}, "
+              f"Tail={tail_prot_dist[h:].mean():.2f}±{tail_prot_dist[h:].std():.2f}, "
+              f"NZ-C={nz_c[h:].mean():.2f}±{nz_c[h:].std():.2f})")
 
-# === Summary table ===
+# === Per-replica summary (with n_eff) ===
+print(f"\n{'='*100}")
+print(f"  Per-replica stats (median + IQR + n_eff from autocorrelation correction)")
+print(f"  {'-'*98}")
+for vname in VARIANTS:
+    for rep in [1, 2, 3]:
+        if rep not in results[vname]: continue
+        r = results[vname][rep]
+        h = r['half']
+        for arr, label in [(r['ca_rmsd'][h:], 'CA_RMSD'), (r['tail_prot_dist'][h:], 'Tail'), (r['nz_c'][h:], 'NZ-C')]:
+            s = stats.summarize(arr, name=f"{LABELS[vname][:12]}_r{rep}_{label}")
+            print(f"    {stats.format_summary(s)}")
+
+# === Legacy mean±std summary (for cross-reference) ===
 print(f"\n{'='*85}")
 print(f"  {'Variant':<20s} {'Rep':>4s} {'CA RMSD':>12s} {'Tail-Prot':>10s} {'E2E':>10s} {'NZ-C':>10s}")
 print(f"  {'-'*83}")
@@ -118,19 +151,22 @@ for vname in VARIANTS:
         nc = f"{r['nz_c'][h:].mean():.1f}±{r['nz_c'][h:].std():.1f}"
         print(f"  {LABELS[vname]:<20s} {rep:>4d} {ecd:>12s} {pep:>12s} {te:>10s} {ee:>10s} {nc:>10s}")
 
-# === Replica-averaged summary ===
+# === Replica-averaged summary (with CV) ===
 print(f"\n{'='*85}")
-print(f"  {'Variant':<20s} {'EC50':>6s} {'ECD RMSD':>12s} {'Pep RMSD':>12s} {'Tail-ECD':>10s}")
+print(f"  {'Variant':<20s} {'EC50':>6s} {'ECD RMSD':>12s} {'Pep RMSD':>12s} {'Tail-ECD':>10s} {'Rep-CV':>8s}")
 print(f"  {'-'*83}")
 for vname in VARIANTS:
     reps = [r for r in results[vname].values()]
     if not reps: continue
-    ecd_avg = np.mean([r['ca_rmsd'][r['half']:].mean() for r in reps])
-    ecd_std = np.std([r['ca_rmsd'][r['half']:].mean() for r in reps])
-    te_avg = np.mean([r['tail_prot_dist'][r['half']:].mean() for r in reps])
-    te_std = np.std([r['tail_prot_dist'][r['half']:].mean() for r in reps])
+    ecd_means = [r['ca_rmsd'][r['half']:].mean() for r in reps]
+    te_means = [r['tail_prot_dist'][r['half']:].mean() for r in reps]
+    ecd_avg = np.mean(ecd_means)
+    ecd_std = np.std(ecd_means)
+    te_avg = np.mean(te_means)
+    te_std = np.std(te_means)
+    cv = stats.replica_cv(te_means)  # CV on the most discriminating metric
     ec50 = float(LAU_EC50[vname])
-    print(f"  {LABELS[vname]:<20s} {ec50:>6.0f} {ecd_avg:>6.1f}±{ecd_std:<4.1f}   {te_avg:>6.1f}±{te_std:<4.1f}")
+    print(f"  {LABELS[vname]:<20s} {ec50:>6.0f} {ecd_avg:>6.1f}±{ecd_std:<4.1f}   {te_avg:>6.1f}±{te_std:<4.1f}   {cv:>7.1%}")
 
 # === Plots ===
 fig, axes = plt.subplots(2, 2, figsize=(16, 10))

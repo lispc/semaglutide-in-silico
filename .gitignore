@@ -42,5 +42,7 @@ common/params/aib.frcmod
 
 # Misc
 cc-ds.sh
+cc.sh
+.env
 __pycache__/
 *.pyc

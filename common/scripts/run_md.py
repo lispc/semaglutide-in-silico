@@ -33,7 +33,7 @@ EXP_A = f"{REPO}/exps/exp-A"
 # Catalytic triad: S630, D708, H740
 # S1 pocket: Y547, W629, Y631, V656, Y662, Y666, N710 (near S1 pocket)
 # Also exclude residues within 5A of catalytic Ser630
-DPP4_FREE_RESIDUES = {630, 708, 740, 547, 629, 631, 656, 662, 666, 710, 711, 631, 632, 633, 634, 635, 547, 548}
+DPP4_FREE_RESIDUES = {630, 708, 740, 547, 548, 629, 631, 632, 633, 634, 635, 656, 662, 666, 710, 711}
 
 def parse_args():
     p = argparse.ArgumentParser()
@@ -132,6 +132,10 @@ def run(mode, restart=None, nsteps=None):
     platform = mm.Platform.getPlatformByName('CUDA')
     properties = {'CudaDeviceIndex': '0', 'CudaPrecision': 'mixed'}
 
+    # Add barostat BEFORE creating Simulation so NPT heating is valid
+    # (Review claude-Jun06 §3.2: barostat must be added before Simulation() or reinitializeContext() called)
+    system.addForce(mm.MonteCarloBarostat(1*unit.bar, 310*unit.kelvin))
+
     simulation = app.Simulation(pdb.topology, system, integrator, platform, properties)
 
     # Set up checkpointing and reporting
@@ -166,7 +170,7 @@ def run(mode, restart=None, nsteps=None):
         simulation.step(25000)
 
         print("Heating 100→310 K (NPT, 100 ps)")
-        system.addForce(mm.MonteCarloBarostat(1*unit.bar, 310*unit.kelvin))
+        # Barostat already added above; no need to add again
         for i in range(5):
             integrator.setTemperature(100 + (i+1)*42)
             simulation.step(10000)
