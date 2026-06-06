@@ -46,3 +46,34 @@ cc.sh
 .env
 __pycache__/
 *.pyc
+
+# exp-F build intermediates
+exps/exp-F/build/system_v*.prmtop
+exps/exp-F/build/system_v*.inpcrd
+exps/exp-F/build/system_v*.pdb
+exps/exp-F/build/tleap_v*.log
+exps/exp-F/build/build_system_v*.in
+exps/exp-F/build/lnk_stripped_v*.mol2
+exps/exp-F/build/lnk_stripped_nobond.mol2
+exps/exp-F/build/lnk_aligned.mol2
+exps/exp-F/build/lya_link_v*.frcmod
+exps/exp-F/build/test_*.in
+exps/exp-F/build/min_log*.txt
+exps/exp-F/build/equil_log.txt
+exps/exp-F/build/min_v*.log
+exps/exp-F/build/equil_v*.log
+
+# exp-F large files
+exps/exp-F/structures/*.pdb
+exps/exp-F/tleap/*.pdb
+exps/exp-F/tleap/*.prmtop
+exps/exp-F/tleap/*.inpcrd
+exps/exp-F/md/rep1/*.pdb
+exps/exp-F/md/rep1/*.chk
+exps/exp-F/md/rep1/*.dcd
+exps/exp-F/md/rep1/*.xml
+exps/exp-F/md/rep1/*_log.txt
+exps/exp-F/build/receptor_peptide.pdb
+exps/exp-F/build/lnk_stripped.mol2
+exps/exp-F/build/lnk_stripped_fixed.mol2
+exps/exp-F/build/*.log

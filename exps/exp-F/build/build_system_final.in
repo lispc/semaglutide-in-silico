@@ -1,0 +1,34 @@
+source leaprc.protein.ff14SB
+source leaprc.water.tip3p
+source leaprc.gaff2
+loadAmberParams lya_link_v2.frcmod
+
+# Load receptor + peptide (no LNK)
+complex = loadPdb receptor_peptide.pdb
+
+# Load stripped linker mol2 (N already removed, with explicit BOND)
+LNK = loadMol2 lnk_stripped_v5.mol2
+
+# Combine
+sys = combine { complex LNK }
+
+# LYS P117 is residue 1140 in the combined system
+# Remove HZ atoms from LYS to prepare for bond
+remove sys sys.1140.HZ1
+remove sys sys.1140.HZ2
+remove sys sys.1140.HZ3
+
+# LNK is residue 1150 in the combined system
+# Create amide bond between LYS NZ and LNK carbonyl C
+bond sys.1140.NZ sys.1150.C
+
+# Solvate
+solvateOct sys TIP3PBOX 12.0
+
+# Neutralize
+addIonsRand sys Na+ 0
+
+# Save
+saveAmberParm sys system_v2.prmtop system_v2.inpcrd
+savePdb sys system_v2.pdb
+quit
