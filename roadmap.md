@@ -307,6 +307,8 @@ exp-E (SAR 复现), exp-F (跨膜激活)
 - **antechamber smi/mol2/pdb 输入均失败**：sqm/bondtype 子程序不可用，改为手动构建 GAFF2 mol2
 - **tleap 加载 mol2 时需包含氢原子**：仅提供重原子导致 tleap 不加 H → VDW 重叠 → NaN
 - **记录的状态不能跑在实际状态前面**：exp-D 的"qualitative match"、barostat "已修"未改、`cc.sh` token 复发——都是文档声明先于事实的教训（best-practice §22/§40）
+- **OpenMM DCD 时间戳不可靠**：DCDReporter 写入的时间戳单位与 mdtraj 解析不一致，导致 dt 被误读 ~100 倍。分析脚本必须从 reporter 设置推导 dt，不能依赖 DCD 时间戳
+- **分析脚本路径错误导致结论基于错误物理状态**：`compare_linkers.py` 加载了 bond-fix 之前的旧轨迹（NZ-C ~14 Å），而非 fixed 版本（NZ-C ~1.51 Å）。frame-0 验证（关键距离检查）应成为标准流程
 
 ---
 

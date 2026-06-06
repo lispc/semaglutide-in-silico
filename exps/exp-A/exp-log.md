@@ -136,7 +136,24 @@ Kimi 对项目做了全面 review，要点：
 - P2/P3：旧版脚本未归档、文档一致性、统计方法升级
 - 作者决定暂不修复，待生产完成后再处理
 
+## 2026-06-06 — 分析统计升级与 DCD 时间戳 bug 发现
+
+### `common/lib/stats.py` 接入
+- 创建 `stats.py`：自相关时间（Geyer 方法）、有效样本量 n_eff、median+IQR、replica CV、correlated t-test
+- `full_analysis.py` 升级：除 mean±std 外，增加 median+IQR+n_eff 输出
+- 运行结果（last 100 ns）：
+  - DPP-4 RMSD: WT median=1.1 [1.0,1.1] n_eff=15; Aib8 median=1.3 [1.2,1.4] n_eff=4
+  - 催化距离: WT median=5.0 [4.8,5.2] n_eff=136; Aib8 median=5.7 [5.4,6.5] n_eff=19
+  - **n_eff 很低**，说明 MD 帧高度自相关，raw mean±std 不可直接作为误差估计
+
+### OpenMM DCD 时间戳 bug
+- **发现**：`mdtraj` 读取 OpenMM DCD 显示 dt=1.0 ps，但 reporter 设置是 50000 步 × 2 fs = 100 ps
+- 实际验证：DCD 文件 2003 帧，大小 2.67 GB，与 ~140k atoms 体系匹配。总模拟时间 200 ns（StateDataReporter 确认），所以真实 dt = 0.1 ns
+- **根因**：OpenMM DCDReporter 写入的时间戳单位与 mdtraj 解析期望不一致（疑似 fs→ps 转换问题），导致时间戳被低估 ~100 倍
+- **影响**：仅影响时间相关分析（自相关时间单位、扩散系数）。几何分析（RMSD、距离）不受影响
+- **修复**：`full_analysis.py` 和 `compare_linkers.py` 中 dt 从 reporter 间隔硬编码（0.1 ns），不再从 DCD 时间戳推导
+
 ---
 
 *维护者：Claude Code*
-*最后更新：2026-05-26*
+*最后更新：2026-06-06*

@@ -226,6 +226,30 @@ NZ-C 键修复验证成功：
 - 趋势与 Lau 2015 Table 3 定性一致
 - 计算复现了 Novo Nordisk 的 linker 设计逻辑
 
+## 2026-06-06 — 重新分析 bond-fix 后的 fixed 轨迹
+
+> ⚠️ **重大发现**：`compare_linkers.py` 之前一直加载的是 bond-fix **之前**的旧轨迹（`{vname}/repN/`），而非 fixed 轨迹（`{vname}_fixed/repN/`）。旧轨迹中 NZ-C ~14 Å（无共价键），fixed 轨迹 NZ-C ~1.51 Å。这意味着**之前的分析结论基于错误的物理状态**。脚本已修复路径和 prmtop 匹配。
+
+### Fixed 版本真实结果（`common/lib/stats.py` 分析）
+
+| Variant | EC50 | CA RMSD | Tail-Prot | Rep-CV (Tail) | 备注 |
+|---------|------|---------|-----------|---------------|------|
+| No linker | 269 | 2.3±0.2 Å | 4.6±0.1 Å | 4.0% | 3 replica |
+| γGlu-1×OEG | 4.8 | 2.5±0.3 Å | 4.4±0.0 Å | 0.2% | **仅 2 replica** (rep1 缺失) |
+| γGlu-2×OEG | 6.2 | 2.5±0.1 Å | **3.8±0.0 Å** | **0.8%** | 3 replica ✓ |
+| γGlu-3×OEG | 27.7 | **3.0±0.1 Å** | 4.1±0.3 Å | 7.5% | 3 replica |
+
+### 统计解读（升级后的 `stats.py`）
+- **Tail-Prot 是最稳健的信号**：2×OEG 3.8 Å vs 其余 4.1–4.6 Å，replica CV 仅 0.8%
+- **CA RMSD 区分度仍不足**：No linker 2.3 vs 2×OEG 2.5，差异 0.2 Å < ±SD
+- **3×OEG CA RMSD 最高（3.0 Å）** 支持 entropic penalty 假说
+- **n_eff 揭示自相关程度**：CA RMSD n_eff 低至 4–81，Tail-Prot n_eff 12–368。对 CA RMSD 直接报 mean±std 会严重高估精度
+- **1×OEG rep1 DCD 为空** —— 实际可用 replica 不足
+
+### 方法学教训
+- `compare_linkers.py` 路径 bug 暴露了一个严重问题：**分析脚本和实际数据之间的匹配需要显式验证**（frame-0 NZ-C 距离检查应成为标准流程）
+- OpenMM DCDReporter 时间戳不可靠（见 exp-A 同日记录），dt 必须从 reporter 设置推导
+
 ---
 *维护者：Claude Code*
-*最后更新：2026-06-04*
+*最后更新：2026-06-06*
