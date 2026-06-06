@@ -24,6 +24,8 @@ MD_DIR = f"{EXP_D}/md"
 OUT = f"{EXP_D}/analysis"
 os.makedirs(OUT, exist_ok=True)
 
+# NOTE 2026-06-06: Must use _fixed variants — bond-fix changed NZ-C from ~14A to ~1.5A.
+# Original (unfixed) trajectories are in {vname}/repN/; fixed trajectories are in {vname}_fixed/repN/.
 VARIANTS = ["no_linker", "gglu_1oeg", "gglu_2oeg", "gglu_3oeg"]
 LABELS = {"no_linker": "No linker (19)", "gglu_1oeg": "γGlu-1×OEG (21)",
           "gglu_2oeg": "γGlu-2×OEG (Sema)", "gglu_3oeg": "γGlu-3×OEG (24)"}
@@ -34,10 +36,12 @@ LAU_EC50 = {"no_linker": 269, "gglu_1oeg": 4.8, "gglu_2oeg": 6.2, "gglu_3oeg": 2
 results = {}
 
 for vname in VARIANTS:
-    prmtop = f"{TLEAP}/{vname}.prmtop"
+    # Use fixed prmtop to match fixed DCD (ParmEd bond-fix removed atoms, so atom counts differ)
+    prmtop = f"{TLEAP}/{vname}_fixed.prmtop"
     results[vname] = {}
     for rep in [1, 2, 3]:
-        dcd = f"{MD_DIR}/{vname}/rep{rep}/{vname}_traj.dcd"
+        # Load fixed trajectory (bond-fix version)
+        dcd = f"{MD_DIR}/{vname}_fixed/rep{rep}/{vname}_fixed_traj.dcd"
         if not os.path.exists(dcd):
             print(f"  MISSING: {dcd}")
             continue
@@ -103,8 +107,9 @@ for vname in VARIANTS:
         else:
             nz_c = np.zeros(t.n_frames)
 
-        # Derive dt from DCD timestamps instead of hard-coding
-        dt_ns = (t.time[1] - t.time[0]) / 1000.0 if t.n_frames > 1 else 0.1
+        # OpenMM DCDReporter timestamps are unreliable (off by ~100x in some versions).
+        # Use known reporter interval: dcd_interval = 50000 steps * 2 fs = 100 ps = 0.1 ns.
+        dt_ns = 0.1  # ns per frame
 
         results[vname][rep] = {
             'ca_rmsd': ca_rmsd, 'tail_prot_dist': tail_prot_dist,
@@ -181,12 +186,14 @@ for vname in VARIANTS:
         axes[0,1].plot(t_ns, r['tail_prot_dist'], color=c, alpha=0.4, linewidth=0.5)
         axes[1,0].plot(t_ns, r['ee_dist'], color=c, alpha=0.4, linewidth=0.5)
         axes[1,1].plot(t_ns, r['nz_c'], color=c, alpha=0.4, linewidth=0.5)
-    # Bold mean line
-    all_ecd = np.array([results[vname][r]['ca_rmsd'] for r in [1,2,3] if r in results[vname]])
-    all_tail = np.array([results[vname][r]['tail_prot_dist'] for r in [1,2,3] if r in results[vname]])
-    if len(all_ecd) > 0:
-        axes[0,0].plot(t_ns, all_ecd.mean(0), color=c, linewidth=2, label=LABELS[vname])
-        axes[0,1].plot(t_ns, all_tail.mean(0), color=c, linewidth=2, label=LABELS[vname])
+    # Bold mean line — align to shortest replica length
+    ecd_arrays = [results[vname][r]['ca_rmsd'] for r in [1,2,3] if r in results[vname]]
+    tail_arrays = [results[vname][r]['tail_prot_dist'] for r in [1,2,3] if r in results[vname]]
+    if ecd_arrays:
+        min_len = min(len(a) for a in ecd_arrays)
+        t_aligned = np.arange(min_len) * dt_ns
+        axes[0,0].plot(t_aligned, np.mean([a[:min_len] for a in ecd_arrays], axis=0), color=c, linewidth=2, label=LABELS[vname])
+        axes[0,1].plot(t_aligned, np.mean([a[:min_len] for a in tail_arrays], axis=0), color=c, linewidth=2, label=LABELS[vname])
 
 axes[0,0].set_ylabel('ECD CA RMSD (Å)'); axes[0,0].set_title('ECD Backbone Stability')
 axes[0,1].set_ylabel('Distance (Å)'); axes[0,1].set_title('C18 Tail → ECD Min Distance')

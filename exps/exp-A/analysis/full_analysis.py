@@ -27,8 +27,12 @@ for label in ["wt", "aib8"]:
     t = md.load(dcd, top=prmtop)
     half = t.n_frames // 2
     t = t[half:]  # last 100 ns
-    dt = (t.time[1] - t.time[0]) / 1000.0 if t.n_frames > 1 else 0.1  # ns per frame
-    print(f"  {t.n_frames} frames ({t.n_frames*dt:.0f} ns), dt={dt:.3f} ns/frame")
+    # OpenMM DCDReporter timestamps are unreliable (often off by 100x).
+    # Derive dt from known protocol: 50000 steps * 2 fs = 100 ps = 0.1 ns per frame.
+    # Total simulation time for exp-A production: 200 ns.
+    dt = 0.1  # ns per frame (known from DCD reporter interval)
+    actual_ns = t.n_frames * dt
+    print(f"  {t.n_frames} frames (~{actual_ns:.0f} ns expected, reporter interval 0.1 ns/frame)")
 
     # Selections
     dpp4_bb = t.topology.select("resid >= 0 and resid <= 727 and backbone")
