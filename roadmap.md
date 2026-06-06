@@ -282,11 +282,12 @@ Aib8,Arg34-GLP-1(Lys26-脂链)
 |------|:---:|------|
 | **exp-C** | ✓ 完成 | 9条100ns完成。游离FA锚定ARG482(2.8Å)。linker接上后FA逃逸(32-41Å)，与末端电荷无关——OEG单元亲水性是主因 |
 | **exp-D** | ⚠️ 数据就绪，结论降级 | 5 linker变体~100ns×3完成（实际 ~95–102 ns，为计划 500 ns 的 ~1/5）。NZ-C bond修复(1.51A)。初步几何趋势与 Lau 2015 Table 3 方向一致，但**差异在误差棒内、无统计检验、无 MM-GBSA**，不足以宣称"复现设计逻辑"。详见 `docs/reviews/claude-Jun06.md` §3.1 |
+| **exp-F** | ✅ Phase 2 完成 | 膜系统构建完成（312,501 atoms）。诊断并绕过 packmol-memgen 关键 bug，自定义 merge pipeline 成功。tleap `Errors = 0`，cpptraj 验证通过。待启动 production MD |
 | **exp-B** | ⏸ 暂停 | ECD-肽复合物在所有晶体结构中均分离 25-40 Å，FlexPepDock 无法修复。等待 AF3/Boltz-1 替代方案 |
 
 ### 待启动
 
-exp-E (SAR 复现), exp-F (跨膜激活)
+exp-E (SAR 复现), exp-F production MD — Phase 1/2 验证 ✅
 
 ### 能力边界与方法学一致性（2026-06-06 补充）
 
@@ -294,7 +295,7 @@ exp-E (SAR 复现), exp-F (跨膜激活)
 
 | 边界 | 说明 | 影响 |
 |------|------|------|
-| **无完整司美格鲁肽体系** | exp-C（HSA 端）无受体；exp-D（受体端）无 HSA。项目目前没有任何体系同时包含肽+linker+C18 二酸+受体+HSA | 四步决策链中"脂链 vs 受体的空间竞争"核心矛盾未被直接观测 |
+| **无完整司美格鲁肽体系** | exp-C（HSA 端）无受体；exp-D（受体端）无 HSA。exp-F Phase 1 已完成溶剂化体系验证（363k atoms），Phase 2 已完成膜嵌入系统构建（312,501 atoms）。但无 HSA、未跑 production MD。项目目前没有任何体系同时包含肽+linker+C18 二酸+受体+HSA | 四步决策链中"脂链 vs 受体的空间竞争"核心矛盾未被直接观测 |
 | **系综不一致** | exp-A 用 NVT production；exp-C/D 用 NPT production | 跨实验能量比较需在 Methods 中明确交代；密度差异 ~2% 为已知系统误差 |
 | **模拟量未达标** | exp-D 实际 ~100 ns（计划 500 ns）；exp-C 实际 100 ns（计划 300 ns） | 采样不足可能导致慢自由度未收敛；结论必须标注" preliminary / not statistically significant" |
 | **统计管线待升级** | 当前分析仅报 mean±std，未做自相关校正、replica CV、correlated t-test | 0.x Å 差异易被误读为"趋势"；`common/lib/stats.py` 已创建，正在接入各实验分析脚本 |
@@ -307,8 +308,13 @@ exp-E (SAR 复现), exp-F (跨膜激活)
 - **antechamber smi/mol2/pdb 输入均失败**：sqm/bondtype 子程序不可用，改为手动构建 GAFF2 mol2
 - **tleap 加载 mol2 时需包含氢原子**：仅提供重原子导致 tleap 不加 H → VDW 重叠 → NaN
 - **记录的状态不能跑在实际状态前面**：exp-D 的"qualitative match"、barostat "已修"未改、`cc.sh` token 复发——都是文档声明先于事实的教训（best-practice §22/§40）
+- **tleap 多链 PDB + mol2 combine 模式是可靠的**：exp-F 成功复用了 exp-D 的 LNK 参数化策略（loadMol2 + remove N + bond NZ-C），但需加载 `leaprc.gaff2` 并精确匹配 tleap 内部残基编号
+- **受体+完整司美格鲁肽溶剂化体系 ~363k atoms**：比预估 250k 大 45%。加膜后可能达 400-450k，需重新评估 GPU 日历
 - **OpenMM DCD 时间戳不可靠**：DCDReporter 写入的时间戳单位与 mdtraj 解析不一致，导致 dt 被误读 ~100 倍。分析脚本必须从 reporter 设置推导 dt，不能依赖 DCD 时间戳
 - **分析脚本路径错误导致结论基于错误物理状态**：`compare_linkers.py` 加载了 bond-fix 之前的旧轨迹（NZ-C ~14 Å），而非 fixed 版本（NZ-C ~1.51 Å）。frame-0 验证（关键距离检查）应成为标准流程
+- **packmol-memgen `renumber=True` 导致残基号冲突**：`MembraneParams.pdb_reindex()` 将蛋白残基按链重新编号从 1 开始，`charmmlipid2amber.py` 仅以 `(chain, resnum)` 识别残基，导致脂质与蛋白残基合并、肽键断裂。必须使用自定义 merge pipeline 绕过
+- **PDB 固定宽度格式的隐性陷阱**：Python f-string `{resname:>3s}{chain:>1s}` 在 4-char resname（如 `WATA`）时会导致 chainID 移至 col 21，坐标列整体左偏 1 列，相邻负值合并为无效坐标。必须在 resName 和 chainID 之间保留显式空格
+- **膜系统规模低于预期**：加膜后 312k atoms < 溶剂化 363k atoms。原因是 packmol 生成的膜 box 小于 oct 溶剂化 box，且脂质密度合理
 
 ---
 
