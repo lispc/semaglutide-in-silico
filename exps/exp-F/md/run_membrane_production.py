@@ -17,9 +17,21 @@ REPO = "/home/scroll/personal/semaglutide-in-silico"
 EXP_F = f"{REPO}/exps/exp-F"
 PRMTOP = f"{EXP_F}/membrane_build/system_final.prmtop"
 INPCRD = f"{EXP_F}/membrane_build/system_final.inpcrd"
-CHK_IN = f"{EXP_F}/md/membrane_equil/equil_safe.chk"
+CHK_EQUIL = f"{EXP_F}/md/membrane_equil/equil_safe.chk"
+CHK_PROD = f"{EXP_F}/md/membrane_rep1/prod_checkpoint.chk"
 OUT_DIR = f"{EXP_F}/md/membrane_rep1"
 os.makedirs(OUT_DIR, exist_ok=True)
+
+# Prioritize production checkpoint if it exists and is newer
+if os.path.exists(CHK_PROD) and os.path.exists(CHK_EQUIL):
+    if os.path.getmtime(CHK_PROD) > os.path.getmtime(CHK_EQUIL):
+        CHK_IN = CHK_PROD
+    else:
+        CHK_IN = CHK_EQUIL
+elif os.path.exists(CHK_PROD):
+    CHK_IN = CHK_PROD
+else:
+    CHK_IN = CHK_EQUIL
 
 # Simulation parameters
 TEMPERATURE = 310 * unit.kelvin
