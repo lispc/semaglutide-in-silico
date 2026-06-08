@@ -267,7 +267,7 @@ Aib8,Arg34-GLP-1(Lys26-脂链)
 
 ---
 
-## 项目当前进度 (2026-06-07)
+## 项目当前进度 (2026-06-08)
 
 ### 已完成
 
@@ -275,6 +275,7 @@ Aib8,Arg34-GLP-1(Lys26-脂链)
 |------|:---:|---------|
 | **exp-A** | ✓ 完成 | Aib8 双甲基在所有 5 个指标上一致推离 DPP-4 活性位点（催化距离 +1.0 Å, S1 CB→W629 +1.7 Å, 接触数 -49） |
 | Phase 0 基础设施 | ✓ 完成 | ff14SB + GAFF2 + TIP3P 管线, Aib 参数化, GROMACS nstlist=40 修复 |
+| **ECD v2 构建** | ✓ 完成 | HSA N-domain + 肽 + ECD + Linker (~145k atoms)。关键修复：跳过 H 原子避免 NGLY 模板冲突、tleap 显式 bond Lys26-LNK |
 
 ### 进行中
 
@@ -282,7 +283,8 @@ Aib8,Arg34-GLP-1(Lys26-脂链)
 |------|:---:|------|
 | **exp-C** | ✓ 完成 | 9条100ns完成。游离FA锚定ARG482(2.8Å)。linker接上后FA逃逸(32-41Å)，与末端电荷无关——OEG单元亲水性是主因 |
 | **exp-D** | ⚠️ 数据就绪，结论降级 | 5 linker变体~100ns×3完成（实际 ~95–102 ns，为计划 500 ns 的 ~1/5）。NZ-C bond修复(1.51A)。初步几何趋势与 Lau 2015 Table 3 方向一致，但**差异在误差棒内、无统计检验、无 MM-GBSA**，不足以宣称"复现设计逻辑"。详见 `docs/reviews/claude-Jun06.md` §3.1 |
-| **exp-F** | ✅ Phase 3 进行中 | 膜体系 production MD 已跑 16.9 ns（目标 100 ns）。结构分析显示膜环境显著稳定受体（RMSD 8.1 Å vs 溶剂化 32.2 Å），肽-受体结合界面稳定，LNK 尾部留在水相中。溶剂化体系因缺膜导致受体严重漂移，数据不可靠 |
+| **exp-F 膜体系** | ✅ 进行中 | 膜体系 production MD ~71.7% 完成（~71 ns / 100 ns），GPU 1，预计 ~16 h 剩余。LNK 尾部经 COM 校正后距膜表面 3.6 ± 2.6 Å |
+| **exp-F ECD v2** | ✅ 进行中 | 最小功能模型 production MD ~8.7% 完成（8.7 ns / 100 ns），GPU 0，预计 ~20 h 剩余。结构验证：Peptide RMSD 0.44 Å, Linker RMSD 0.32 Å — 极其稳定；HSA 仍在弛豫 |
 | **exp-B** | ⏸ 暂停 | ECD-肽复合物在所有晶体结构中均分离 25-40 Å，FlexPepDock 无法修复。等待 AF3/Boltz-1 替代方案 |
 
 ### 待启动
@@ -319,6 +321,11 @@ exp-E (SAR 复现), exp-F production MD — Phase 1/2 验证 ✅
 - **司美格鲁肽 C18 二酸尾部不插入膜**：膜体系 16.9 ns 轨迹显示 LNK 尾部（z=15.4 nm）远离膜中心，与 exp-C "linker-FA 逃逸"一致。脂链的亲水二酸末端倾向于留在水相
 - **溶剂化体系的 equilibration 必须包含膜或强约束**：250 ps equilibration 不足以稳定 363k atoms 的无膜受体体系。若需无膜体系，必须对 TMD 加约束或延长 equilibration 至 >1 ns
 - **OpenMM DCD 的 box 类型可能与 prmtop 不匹配**：cpptraj 读取 DCD 时报告 "Trajectory box type is Rhombohedral but topology box type is Truncated octahedron"。实际应为正交盒（膜体系），需用 `box` 命令强制修正
+- **tleap 跳过 H 原子可避免 NGLY/CGLY/ACE 模板冲突**：ECD v2 构建中，HSA + 肽 + ECD + LNK 组合时，N-terminal GLY 同时带有 H 原子和 ACE 帽，导致 tleap NGLY 模板坐标不匹配报错。在 build 脚本中跳过所有 H 原子（`if element == 'H': continue`），让 tleap 自动补全，可消除该冲突
+- **tleap 显式 `bond` 适用于跨残基共价连接**：ECD v2 中 Lys26（残基 145）与 Linker C 端（残基 157）的酰胺键需通过 `bond SYS.145.NZ SYS.157.C` 显式声明，否则 tleap 将二者视为独立链，导致不合理终止
+- **ECD 最小功能模型规模远低于完整受体体系**：HSA N-domain + 肽 + ECD + LNK + TIP3P = 145k atoms，仅为完整膜体系（312k）的 46%。这是因为省去了 TMD、Gs、POPC 膜和大量水分子
+- **ECD v2 中的 HSA 游离 domain 行为与膜体系中的受体不同**：HSA 在溶液中无配体/膜约束，RMSD 在 8 ns 内从 0 → 7.5 Å 仍在弛豫；而膜体系中受体受膜锚定，RMSD 3 Å 即 plateau。游离蛋白 domain 需要更长模拟时间才能达到平衡
+- **OpenMM 正在写入的 DCD 文件可被 MDAnalysis 安全读取**：分析脚本可直接读取正在生产的 DCD，但帧数会因写入进度而动态变化。分析时取各 universe 帧数的最小值可避免维度不匹配
 
 ---
 
