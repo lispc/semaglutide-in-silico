@@ -113,3 +113,123 @@ exps/exp-F/membrane_build/Cl-.pdb
 exps/exp-F/membrane_build/water_ions_final.pdb
 exps/exp-F/membrane_build/translate_pdb.py
 exps/exp-F/membrane_build/lnk_only.pdb
+
+# === New additions ===
+
+# Root-level intermediate files
+*.mol2
+sema_combined.pdb
+
+# exp-A
+exps/exp-A/analysis/*.png
+exps/exp-A/gmx/*/*.top
+exps/exp-A/gmx/*/mdout.mdp
+exps/exp-A/md/*/*_final.pdb
+
+# exp-B
+exps/exp-B/boltz/
+exps/exp-B/docking/*.pdb
+exps/exp-B/docking/*.sc
+exps/exp-B/structures/*.pdb
+
+# exp-C
+exps/exp-C/analysis/*.png
+exps/exp-C/md/*/
+exps/exp-C/structures/
+exps/exp-C/tleap/build_*.in
+exps/exp-C/tleap/build_*.py
+exps/exp-C/tleap/apply_charged_linker.py
+
+# exp-F minimal model outputs
+exps/exp-F/minimal_model/*.pdb
+exps/exp-F/minimal_model/*.prmtop
+exps/exp-F/minimal_model/*.inpcrd
+exps/exp-F/minimal_model/*.log
+exps/exp-F/minimal_model/build_ecd_v2*.in
+exps/exp-F/minimal_model/check_charge.in
+exps/exp-F/minimal_model/check_charge.log
+exps/exp-F/minimal_model/complex_ecd_v2_clean.pdb
+
+# exp-F MD outputs
+exps/exp-F/md/*/*.log
+exps/exp-F/md/*/*.dcd
+exps/exp-F/md/*/*.chk
+exps/exp-F/md/*/*.pdb
+exps/exp-F/md/*/nohup.out
+exps/exp-F/md/analysis_solvent.cpptraj
+
+# exp-F analysis
+exps/exp-F/analysis/*.png
+exps/exp-F/analysis/*.dat
+exps/exp-F/analysis/*.txt
+
+# exp-F build temp files
+exps/exp-F/build/*.mol2
+exps/exp-F/build/sqm.*
+exps/exp-F/build/test_*.pdb
+exps/exp-F/build/test_out.pdb
+exps/exp-F/build/datapar*
+exps/exp-F/build/datasub*
+exps/exp-F/build/build_minimal_model.py
+
+# exp-F membrane build
+exps/exp-F/membrane_build/build_membrane.in
+exps/exp-F/membrane_build/build_system.py
+exps/exp-F/membrane_build/build_system_zero.in
+exps/exp-F/membrane_build/check.prmtop.in
+exps/exp-F/membrane_build/leap.in
+exps/exp-F/membrane_build/membrane_only.pdb_FORCED
+exps/exp-F/membrane_build/membrane_system_lipid.top
+exps/exp-F/membrane_build/protein.pdb
+exps/exp-F/membrane_build/water_final_*.pdb
+exps/exp-F/packmol.inp
+
+# exp-C additional
+exps/exp-C/tleap/*.pdb
+exps/exp-C/tleap/*.xml
+exps/exp-C/tleap/*.frcmod
+exps/exp-C/tleap/sqm.*
+exps/exp-C/tleap/test.inpcrd
+exps/exp-C/md/launch_charged.sh
+
+# exp-D
+exps/exp-D/analysis/*.png
+exps/exp-D/md/*/
+exps/exp-D/tleap/*_fixed.pdb
+
+# exp-F ion/lipid PDBs
+exps/exp-F/Cl-.pdb
+exps/exp-F/K+.pdb
+exps/exp-F/PROT0.pdb
+exps/exp-F/WAT.pdb
+exps/exp-F/datapar*
+exps/exp-F/datasub*
+
+# exp-B
+exps/exp-B/structures/test.inpcrd
+
+# exp-C shell scripts and outputs
+exps/exp-C/tleap/*.sh
+exps/exp-C/tleap/linker_fa/*.pdb
+
+# exp-F minimal model outputs (keep scripts)
+exps/exp-F/minimal_model/*.pdb
+exps/exp-F/minimal_model/*.prmtop
+exps/exp-F/minimal_model/*.inpcrd
+exps/exp-F/minimal_model/*.log
+exps/exp-F/minimal_model/build_ecd_v2*.in
+exps/exp-F/minimal_model/complex_ecd_v2_clean.pdb
+exps/exp-F/minimal_model/check_charge*
+
+# exp-F minimal_model - ignore large outputs but keep scripts
+exps/exp-F/minimal_model/complex_*.pdb
+exps/exp-F/minimal_model/system_*.prmtop
+exps/exp-F/minimal_model/system_*.inpcrd
+exps/exp-F/minimal_model/system_*.pdb
+exps/exp-F/minimal_model/leap.log
+exps/exp-F/minimal_model/build_ecd_v2_debug*.in
+exps/exp-F/minimal_model/build_ecd_v2_debug*.log
+exps/exp-F/minimal_model/build_ecd_v2_test*.in
+exps/exp-F/minimal_model/build_ecd_v2_test*.log
+exps/exp-F/minimal_model/check_charge*
+exps/exp-F/minimal_model/md/

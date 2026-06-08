@@ -1,0 +1,20 @@
+source leaprc.protein.ff14SB
+source leaprc.water.tip3p
+source leaprc.gaff2
+
+loadAmberParams /home/scroll/personal/semaglutide-in-silico/exps/exp-F/build/lya_link_final.frcmod
+LNK = loadMol2 /home/scroll/personal/semaglutide-in-silico/exps/exp-F/build/lnk_noh_zero.mol2
+
+COMPLEX = loadPdb /home/scroll/personal/semaglutide-in-silico/exps/exp-F/minimal_model/complex_ecd.pdb
+
+SYS = combine {COMPLEX}
+
+desc SYS
+
+solvateBox SYS TIP3PBOX 5.0
+addIonsRand SYS Na+ 0
+addIonsRand SYS Cl- 0
+
+savePdb SYS /home/scroll/personal/semaglutide-in-silico/exps/exp-F/minimal_model/system_ecd.pdb
+saveAmberParm SYS /home/scroll/personal/semaglutide-in-silico/exps/exp-F/minimal_model/system_ecd.prmtop /home/scroll/personal/semaglutide-in-silico/exps/exp-F/minimal_model/system_ecd.inpcrd
+quit

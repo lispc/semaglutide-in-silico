@@ -1,0 +1,25 @@
+source leaprc.protein.ff14SB
+source leaprc.water.tip3p
+source leaprc.gaff2
+
+loadAmberParams /home/scroll/personal/semaglutide-in-silico/exps/exp-F/build/lya_link_final.frcmod
+LNK = loadMol2 /home/scroll/personal/semaglutide-in-silico/exps/exp-F/build/lnk_noh_zero.mol2
+
+COMPLEX = loadPdb /home/scroll/personal/semaglutide-in-silico/exps/exp-F/minimal_model/complex_minimal_no_myr.pdb
+
+SYS = combine {COMPLEX}
+
+# Form amide bond between LYS P117 and LNK
+# In the merged PDB, LYS is in chain P, LNK is in chain L
+# Need to find correct tleap indices after loading
+# We will inspect and fix manually if needed
+
+desc SYS
+
+solvateOct SYS TIP3PBOX 10.0
+addIonsRand SYS Na+ 0
+addIonsRand SYS Cl- 0
+
+savePdb SYS /home/scroll/personal/semaglutide-in-silico/exps/exp-F/minimal_model/system_minimal.pdb
+saveAmberParm SYS /home/scroll/personal/semaglutide-in-silico/exps/exp-F/minimal_model/system_minimal.prmtop /home/scroll/personal/semaglutide-in-silico/exps/exp-F/minimal_model/system_minimal.inpcrd
+quit
