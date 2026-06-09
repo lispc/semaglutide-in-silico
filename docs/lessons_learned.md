@@ -1,0 +1,155 @@
+# Semaglutide In-Silico 项目：经验教训与错误记录
+
+> 本文档记录项目中的关键错误、误诊、及其根本原因，以防止重复发生。
+
+---
+
+## 错误 #1：Lys20–LNK 共价键"缺失"误诊（2025-06-06）
+
+### 症状
+- tleap 日志显示 `bond SYS.117.NZ SYS.129.C` 报错
+- 后续 `bond SYS.145.NZ SYS.157.C` 成功
+- **错误结论**：`system_ecd_v2.prmtop` 中 Lys20 与 LNK 之间无共价键
+
+### 影响
+- 基于"键缺失"假设，错误解释了 100ns MD 的高 RMSD（35–55 Å）为"结构不稳定"
+- 报告 5.7–5.9 节全部基于错误前提
+- 差点决定"重建体系并重跑 MD"
+
+### 根本原因
+1. **tleap 内部编号与最终 prmtop 编号的混淆**：`SYS.145.NZ` 和 `SYS.157.C` 是 tleap 在添加溶剂前的内部顺序编号，不是最终 prmtop 的原子编号
+2. **未验证即下结论**：看到 tleap 日志中第一行 bond 报错，就假设键未建立，没有用 `parmed` 或 MDAnalysis 检查最终 prmtop
+3. **bond 命令的成功执行被忽略**：日志中明确显示第二行 bond 成功，但未意识到它对应的是同一对原子
+
+### 验证方法（正确做法）
+```python
+import parmed as pmd
+
+prm = pmd.load_file('system_ecd_v2.prmtop')
+# 检查特定原子对是否成键
+for bond in prm.bonds:
+    if (bond.atom1.name == 'NZ' and bond.atom2.name == 'C') or \
+       (bond.atom1.name == 'C' and bond.atom2.name == 'NZ'):
+        print(f"Bond: {bond.atom1.residue.name}{bond.atom1.residue.number}.{bond.atom1.name} -- "
+              f"{bond.atom2.residue.name}{bond.atom2.residue.number}.{bond.atom2.name}")
+        print(f"  k = {bond.type.k:.1f} kcal/mol/Å², req = {bond.type.req:.3f} Å")
+
+# MDAnalysis 二次验证
+import MDAnalysis as mda
+u = mda.Universe('system_ecd_v2.prmtop')
+print("Bonds in topology:", u.bonds is not None)
+print("Number of bonds:", len(u.bonds) if u.bonds else 0)
+```
+
+### 教训
+1. **永远验证最终文件，不要只看中间日志**
+2. **tleap 的内部编号 ≠ 最终 prmtop 编号**，bond 命令的成功与否应以最终拓扑为准
+3. **多个独立工具交叉验证**：parmed + MDAnalysis + 可视化（VMD）三重确认
+
+---
+
+## 错误 #2：superposition=False RMSD 误导诊断（2025-06-06）
+
+### 症状
+- ECD v2 100ns MD 的 RMSD 高达 35–55 Å
+- **错误结论**："结构不稳定，仍在漂移"
+
+### 影响
+- 与错误 #1 叠加，形成了"键缺失导致结构不稳定"的错误叙事
+- 掩盖了真实的物理图景：ECD/肽段/LNK 内部结构稳定，通过柔性 linker 做域间运动
+
+### 根本原因
+- **未区分 RMSD 的两种含义**：
+  - `superposition=True`：先最佳叠合再计算 RMSD → 衡量**内部构象变化**
+  - `superposition=False`：直接计算坐标差 → 包含**平移/旋转/构象变化**
+- 对于含柔性 linker 的体系，superposition=False 会将正常的域间运动（几十 Å）误判为"结构破坏"
+
+### 正确分析方法
+```python
+from MDAnalysis.analysis import rms, align
+
+# 1. 内部稳定性：superposition=True
+# 适用于评估蛋白质/肽段是否保持折叠状态
+rmsd_internal = rms.rmsd(sel.positions, ref_sel.positions, superposition=True)
+
+# 2. 域间运动：质心距离
+# 适用于评估 linker 柔性和域间相对位置
+def com_distance(u, sel1, sel2):
+    return np.linalg.norm(sel1.center_of_mass() - sel2.center_of_mass())
+
+# 3. Linker 柔性：半径回转 Rg
+rg = sel.radius_of_gyration()
+```
+
+### 教训
+1. **柔性 linker 体系必须同时报告**：
+   - 内部 RMSD（superposition=True）→ 结构稳定性
+   - COM 距离 → 域间运动幅度
+   - Rg → linker 伸展程度
+2. **RMSD 数值大 ≠ 结构不稳定**，必须结合 superposition 参数和物理图景解读
+3. **分析前先思考**：该体系的预期行为是什么？对于 HSA-linker-ECD 体系，大尺度域间运动是设计意图
+
+---
+
+## 错误 #3：分析脚本性能问题（2025-06-06）
+
+### 症状
+- `analyze_ecd_v2_100ns.py` 运行超时（>30 分钟）
+- 4 个独立的 `AlignTraj` 调用，每个都要重新加载 100ns DCD（~4GB）
+
+### 根本原因
+- **重复加载大文件**：每个 RMSF 分析都创建新的 Universe 并重新加载 DCD
+- **in_memory=False**：每次对齐都写入临时文件，I/O 开销巨大
+- **未复用已对齐的轨迹**：ECD、Peptide、HSA 可以用同一个全局对齐的轨迹计算 RMSF
+
+### 优化方案
+```python
+# 优化前（慢）：4 次独立对齐
+for sel in ['resid 1-100', 'resid 101-128', 'resid 130-711', 'resid 129']:
+    u = mda.Universe(PRMTOP, DCD)
+    align.AlignTraj(u, ref, select=sel, in_memory=False).run()
+    RMSF(...).run()
+
+# 优化后（快）：1 次全局对齐，复用
+u = mda.Universe(PRMTOP, DCD)
+align.AlignTraj(u, ref, select='protein and name CA', in_memory=True).run(step=STEP)
+# 所有 RMSF 都在已对齐的 u 上计算
+ecd_rmsf = RMSF(u.select_atoms('name CA and resid 1-100')).run(step=STEP)
+pep_rmsf = RMSF(u.select_atoms('name CA and resid 101-128')).run(step=STEP)
+hsa_rmsf = RMSF(u.select_atoms('name CA and resid 130-711')).run(step=STEP)
+```
+
+### 教训
+1. **I/O 是大 MD 分析的瓶颈**：避免重复加载轨迹文件
+2. **`in_memory=True`**：当内存足够时（4GB DCD → ~8GB 内存），使用内存对齐避免临时文件
+3. **全局对齐优于局部对齐**：对多组分体系，用共同的骨架对齐一次，再分别计算各组分的 RMSF
+4. **`step` 参数**：分析时跳过帧（如 step=5）可大幅加速，不影响统计可靠性
+
+---
+
+## 方法论总结
+
+### 构建阶段
+| 检查项 | 工具 | 何时做 |
+|--------|------|--------|
+| 共价键是否存在 | `parmed` / MDAnalysis | 构建后立即 |
+| 原子编号对应关系 | `parmed` 打印 residue/atom 列表 | 困惑时 |
+| 结构可视化 | VMD / PyMOL | 运行 MD 前 |
+| 体系电荷中性 | `parmed` 统计 | 构建后 |
+
+### 分析阶段
+| 体系类型 | 必报指标 | 禁止做法 |
+|----------|---------|---------|
+| 柔性 linker 体系 | 内部 RMSD + COM 距离 + Rg | 仅报 superposition=False RMSD |
+| 膜蛋白体系 | 膜法向对齐 + z-position COM 校正 | 绝对坐标 |
+| 结合态复合物 | 界面距离 + 氢键 + MM-GBSA | 仅报整体 RMSD |
+
+### 诊断流程
+1. **数据异常？先怀疑工具/方法，再怀疑物理**
+2. **大 RMSD？先问 superposition=True 还是 False**
+3. **键是否建立？用 parmed + MDAnalysis 双重验证，不要只看 tleap 日志**
+4. **性能问题？检查 I/O 和内存使用，优先复用加载的轨迹**
+
+---
+
+*最后更新：2025-06-06*
