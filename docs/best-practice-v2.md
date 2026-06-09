@@ -99,11 +99,11 @@
 - **场景**：相邻负坐标合并为 `-43.108-107.555`。
 - **正确做法**：resname 和 chainID 之间保留**显式空格**：`{resname:>3s} {chain:>1s}`。
 
-### 11. 膜体系规模可能低于溶剂化体系
+### 11. 膜体系规模以实际构建结果为准（本项目膜体系 312k atoms）
 
 - 直觉认为"加膜后原子数更多"，但实际情况取决于 box 尺寸。
-- **场景**：溶剂化体系 363k atoms（oct box 171.6 Å），膜体系 312k atoms（orthorhombic box 更小）。
-- **教训**：不要预设膜体系一定更大，以实际构建结果为准。
+- **场景**：溶剂化体系 363k atoms（oct box 171.6 Å），膜体系 **312,476 atoms**（orthorhombic box 更小）。
+- **教训**：不要预设膜体系一定更大，以实际构建结果为准。后续性能估算必须基于真实原子数。
 
 ### 12. 膜环境是跨膜受体稳定的必要条件
 
@@ -140,7 +140,42 @@
 
 ---
 
-## 五、分析方法论
+## 五、MD 引擎性能与 GPU 分配
+
+### 27. 大型膜系统（312k atoms）GROMACS 2026 比 OpenMM 快约 2.3×
+
+- **实测数据**（RTX 3090，2 fs 步长，各自独占 GPU）：
+  - GROMACS 2026：~~81–100~~ **96.4 ns/day**（`-nb gpu -pme gpu -update gpu`，PP/PME/约束全 GPU）
+  - OpenMM 7.7+：~~约 95~~ **42.1 ns/day**（CUDA mixed precision，Monte Carlo barostat）
+- **关键发现**：系统实际为 **312,476 atoms**，此前误记为 ~140k。基于 312k 的 2.3× 差距是合理的（GROMACS 的 Verlet 列表和 PME 优化在大系统上优势放大）。
+- **教训**：
+  1. 性能估算前必须确认**真实原子数**。
+  2. GROMACS 对 300k+ 原子膜系统的优势可达 2× 以上，跨引擎比较时不能假设同速。
+
+### 28. 多 GPU 环境下必须显式分配设备，避免隐性竞争
+
+- **场景**：4× RTX 3090 机器上，OpenMM 默认取 device 0，GROMACS 默认也取 device 0，若同时启动会互相抢占导致双方速度暴跌。
+- **正确做法**：
+  - OpenMM：`platform_props = {"CudaDeviceIndex": "1"}`
+  - GROMACS：`export CUDA_VISIBLE_DEVICES=2` + `gmx mdrun -nb gpu -pme gpu -update gpu`
+- **验证**：`nvidia-smi` 确认两个进程分别落在不同 GPU，utilization 各自 ~99%，无竞争。
+
+### 29. 速度必须用 wall-time 独立验证，不能只看引擎自报
+
+- OpenMM 的 `StateDataReporter speed` 与独立 wall-time 计算（`ns_run / hours_wall × 24`）吻合（42.3 vs 42.1 ns/day）。
+- GROMACS 没有实时 speed 列，必须用 `tpr` 创建时间到 `log` 修改时间推算；早期曾误将 `ns/h` 当成 `ns/day` 导致低估。
+- **教训**：
+  - 对 GROMACS，以 `md.log`/`npt.log` 的 `Modify` 时间减去 `md.tpr`/`npt.tpr` 的 `Birth` 时间作为 wall-time。
+  - 计算时先统一为 `ns/h`，再**显式 ×24** 得到 `ns/day`。
+
+### 30. OpenMM 的 Python checkpoint 每 1 ns 写入有一定 overhead
+
+- **场景**：OpenMM 每 1 ns 调用 `context.createCheckpoint()` 写入 46 MB 文件，在 312k 原子系统上单次写入耗时数秒。
+- **教训**：长生产 run 的 checkpoint 间隔可以适当放宽（如 5 ns），减少 I/O 阻塞；GROMACS 的 `.cpt` 由引擎内部高效管理，无需担心。
+
+---
+
+## 六、分析方法论
 
 ### 17. 柔性 linker 体系必须区分内部稳定性与域间运动
 
@@ -187,7 +222,7 @@
 
 ---
 
-## 六、晶体结构与模型构建
+## 七、晶体结构与模型构建
 
 ### 21. 所有 GLP-1R ECD-肽晶体结构中 ECD 与肽均分离 25-40 Å
 
@@ -204,7 +239,7 @@
 
 ---
 
-## 七、文档与项目管理
+## 八、文档与项目管理
 
 ### 23. 文档声明不能跑在实际状态前面
 
@@ -228,7 +263,7 @@
 
 ---
 
-## 八、安全
+## 九、安全
 
 ### 26. API key 安全问题会以新文件名复发
 
@@ -237,7 +272,7 @@
 
 ---
 
-## 九、快速检查清单（本项目特有）
+## 十、快速检查清单（本项目特有）
 
 ### 构建后
 - [ ] mol2 原子数 vs 预期 SMILES 一致
@@ -261,5 +296,5 @@
 
 ---
 
-*最后更新：2026-06-09*
+*最后更新：2026-06-09（GROMACS 96.4 vs OpenMM 42.1 ns/day 实测数据已补充）*
 *来源：semaglutide-in-silico 项目 exp-A~F 实验日志、构建日志、review 文件*
