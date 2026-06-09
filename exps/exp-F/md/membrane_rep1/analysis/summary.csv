@@ -1,0 +1,2 @@
+total_frames,analyzed_frames,total_ns,receptor_rmsd_mean_A,receptor_rmsd_max_A,peptide_rmsd_mean_A,peptide_rmsd_max_A,receptor_rmsf_mean_A,receptor_rmsf_max_A,peptide_rmsf_mean_A,peptide_rmsf_max_A,lnk_tail_membrane_dist_A,lnk_tail_membrane_std_A,membrane_thickness_A,area_per_lipid_A2
+5790,579,100.0,3.579350682938552,4.722409870515781,1.1705629690872856,1.6922328587816586,4.386168359399534,9.7571650279062,5.504271754864619,6.407580873586167,30.64329719543457,1.953865885734558,44.14034271240234,69.656044
