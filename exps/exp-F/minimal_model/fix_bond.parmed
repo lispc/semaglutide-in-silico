@@ -1,0 +1,3 @@
+system_ecd_v2.prmtop
+addBond :117@NZ :129@C 1.0
+outparm system_ecd_v2_fixed.prmtop system_ecd_v2_fixed.inpcrd

@@ -152,4 +152,63 @@ hsa_rmsf = RMSF(u.select_atoms('name CA and resid 130-711')).run(step=STEP)
 
 ---
 
+## 错误 #4：膜体系 LNK mol2 含垃圾原子导致 MD 能量灾难（2025-06-06）
+
+### 症状
+- 膜体系生产 MD（68 ns）中 PE 出现大量跳变：72% 的帧间差 > 1000 kJ/mol
+- LNK 残基（resid 1140）含 47 个原子而非预期的 43 个
+- VMD 可视化显示 LNK 链末端有 4 个孤立原子（C58/O59/N60/C61）在 ~40Å 外飘浮
+- `parmed` 检查：`lnk_noh_fixed.mol2` 中无 C55-C58 键，C58 与主链完全断开
+
+### 影响
+- **68 ns MD 数据作废**：LNK 内部几何完全错误，脂肪酸链的物理行为不可信
+- **受体/肽段/膜的分析仍可用**：TM6 位移、肽-受体相互作用、膜性质等不依赖 LNK 正确性
+- **项目进度延迟**：需重建膜体系（重新 minimization + equilibration + production）
+
+### 根本原因
+1. **mol2 文件未经验证直接用于膜体系构建**：`lnk_noh_fixed.mol2`（以及 `lnk_dum.mol2`、`lnk_noh.mol2`）均含 4 个额外原子
+2. **构建流程未检查原子连通性**：tleap 加溶剂、加膜时未报错，因为额外原子只是"孤立"而非化学上不可能
+3. **Mol2 原子顺序问题**：mol2 中原子名与 PDB 中的 `ATOM`/`HETATM` 命名不同，导致很难直观对比
+
+### 验证方法（正确做法）
+```python
+import parmed as pmd
+
+# 1. 检查原子数
+prm = pmd.load_file('lnk_noh_fixed.mol2')
+print(f"Atoms: {len(prm.atoms)}")  # 应为 43，实际是 47
+
+# 2. 检查末端连通性
+for bond in prm.bonds:
+    if 'C55' in [bond.atom1.name, bond.atom2.name]:
+        print(f"C55 bonded to: {bond.atom1.name if bond.atom2.name == 'C55' else bond.atom2.name}")
+# 正确：C55 应连 C54 和 C56（或 O56，取决于命名）
+# 实际：C55 只连 C54，C58 未与 C55 成键
+
+# 3. 可视化检查
+# VMD: 加载 system.pdb，用 "resid 1140" 选择 LNK，旋转查看链末端
+# 若有原子远离主链 → 立即停跑
+```
+
+### 修复步骤
+1. **定位问题**：比较 LNK mol2 与正确结构（文献 SMILES / 原始构建脚本）
+2. **移除垃圾原子**：用文本编辑器删除 mol2 中 4 个孤立原子的记录
+3. **验证修复后**：
+   - 原子数 = 43
+   - 键数 = 42（或 43，取决于末端羧基）
+   - VMD 可视化确认链连续
+4. **重建整个膜体系**：从 `minimization` 开始，不能用旧的 `inpcrd`
+
+### 教训
+1. **mol2 是小分子拓扑的薄弱环节**：mol2 格式宽松，无标准验证工具，容易混入错误原子
+2. **任何新的小分子 mol2 必须通过三重检查**：
+   - 原子数 vs 预期 SMILES
+   - 末端连通性（parmed 键列表）
+   - 可视化（VMD/PyMOL）
+3. **长链脂肪酸 mol2 特别脆弱**：C18 二酸链长，原子编号容易出错，末端几个原子最容易遗漏或重复
+4. **能量异常是拓扑错误的第一信号**：PE 跳变 > 1000 kJ/mol 不应被忽视，应立即停跑检查
+5. **构建脚本应加入自动化验证**：在 `tleap` 后、MD 前，检查所有非标准残基的原子数和连通性
+
+---
+
 *最后更新：2025-06-06*

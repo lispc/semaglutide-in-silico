@@ -1,0 +1,5 @@
+parm system_ecd_v2.prmtop
+trajin ../md/ecd_v2/prod.dcd
+strip :WAT,Na+,130-711
+trajout ecd_pep_lnk_prod.dcd dcd
+run
