@@ -96,7 +96,7 @@ t0 = time.time()
 
 # Run in segments to allow checkpointing
 segment = CHECKPOINT_INTERVAL
-for start in range(0, N_STEPS, segment):
+for start in range(current_step, N_STEPS, segment):
     end = min(start + segment, N_STEPS)
     steps = end - start
     simulation.step(steps)
