@@ -138,6 +138,19 @@
 - **场景**：exp-C 中 XML 反序列化（31 MB）后 addForce  hang。
 - **正确做法**：从 prmtop 重建系统（`createSystem` 仅 3s）比 XML 缓存（40+s 加载 + 风险）更可靠。
 
+### 17. GROMACS `md.xtc` 默认保存 wrapped 坐标，直接读入 MDAnalysis 会导致 RMSD 严重低估
+
+- GROMACS 压缩轨迹默认保存 PBC-wrapped 坐标，跨 box 边界的原子会被折回，使柔性区域（如 linker、loop）看起来"没有移动"。
+- **场景**：exp-F GROMACS 膜体系中，LNK RMSD 直接从 `md.xtc` 读取仅 3.9 Å，修正 PBC 后实际为 **10.9 Å**——低估了 **~2.8×**。
+- **正确做法**：
+  1. 分析前先用 `gmx trjconv -pbc whole` 生成完整分子轨迹：
+     ```bash
+     echo "0" | gmx trjconv -s md.tpr -f md.xtc -o md_whole.xtc -pbc whole -n system.ndx
+     ```
+  2. 以 `md_whole.xtc` 作为 MDAnalysis/mdtraj 的输入。
+  3. 对膜体系，`whole` 比 `nojump` 更适合，因为 `nojump` 会让整个系统随 COM 漂移出 box。
+- **教训**：分析 GROMACS 轨迹时，**永远不要直接信任原始 xtc 的坐标**，PBC 处理必须是标准流程的第一步。
+
 ---
 
 ## 五、MD 引擎性能与 GPU 分配
