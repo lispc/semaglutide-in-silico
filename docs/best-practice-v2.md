@@ -274,6 +274,20 @@
 - **场景**：`compare_linkers.py` 加载了 bond-fix 之前的旧轨迹（NZ-C ~14 Å），而非 fixed 版本（NZ-C ~1.51 Å），得出"变体间无差异"的错误结论。
 - **正确做法**：frame-0 验证（关键距离检查）必须成为标准流程，确认加载的是正确的拓扑和轨迹。
 
+### 26. 生产 MD 完成后必须立即归档原始拓扑，不能在同目录重建
+
+- **场景**：exp-F 膜体系第一次生产 MD（110 ns）完成后，用户在 `membrane_build/` 目录重新执行 tleap build 流程。新的 `system_final.prmtop` 直接覆盖了旧版本，导致旧 prmtop（312,501 atoms）永久丢失。
+- **后果**：
+  1. 旧 checkpoint（55M steps）虽然能加载，但坐标已损坏（PE = 67.6 亿 kJ/mol，原子散布 2800 Å），第一步即 NaN。
+  2. 旧 DCD（68 ns）无法与任何现有 prmtop 匹配（原子顺序不同），PE 计算异常（65 亿 kJ/mol）。
+  3. **110 ns 轨迹数据完全作废**，无法延续，也无法用正确能量重新分析。
+- **根本原因**：旧 run 使用的 `membrane_build/system_final.prmtop` 是**唯一**能正确解释旧 DCD/checkpoint 的拓扑，没有备份即被覆盖。
+- **正确做法**：
+  1. **生产 run 启动前**，将构建好的 `system_final.{prmtop,inpcrd,pdb}` 复制到**归档目录**（如 `archive/system_v1/`）。
+  2. **生产 run 完成后**，将 `prmtop + inpcrd + 所有 checkpoint + DCD + log` 打包到 `archive/run_v1/`。
+  3. 只有当归档完成且验证通过后，才允许在同一目录重建系统。
+  4. 版本命名规则：`system_v1.prmtop`、`system_v2.prmtop`，绝不在同一文件名上覆盖。
+
 ---
 
 ## 九、安全

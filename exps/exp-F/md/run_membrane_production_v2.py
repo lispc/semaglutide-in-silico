@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Production MD for membrane-embedded GLP-1R + semaglutide (exp-F) - v2 with append support.
-Restarts from production checkpoint, preserves existing DCD/log.
+Production MD for membrane-embedded GLP-1R + semaglutide (exp-F) - v2 FIXED.
+Target: 200 ns. Continues from prod_v2_checkpoint.chk.
 
 Input:  membrane_build/system_final.prmtop
-        membrane_rep1/prod_checkpoint.chk (or membrane_equil/equil_safe.chk)
+        membrane_rep1/prod_v2_checkpoint.chk (or membrane_equil/equil_safe.chk)
 Output: membrane_rep1/prod_v2.{dcd,log,chk}
 GPU:    CUDA device 1
 """
@@ -21,24 +21,22 @@ OUT_DIR = f"{EXP_F}/md/membrane_rep1"
 os.makedirs(OUT_DIR, exist_ok=True)
 
 CHK_EQUIL = f"{EXP_F}/md/membrane_equil/equil_safe.chk"
-CHK_PROD = f"{OUT_DIR}/prod_checkpoint.chk"
+CHK_PROD = f"{OUT_DIR}/prod_v2_checkpoint.chk"  # FIXED: was prod_checkpoint.chk
 
-if os.path.exists(CHK_PROD) and os.path.exists(CHK_EQUIL):
-    if os.path.getmtime(CHK_PROD) > os.path.getmtime(CHK_EQUIL):
-        CHK_IN = CHK_PROD
-    else:
-        CHK_IN = CHK_EQUIL
-elif os.path.exists(CHK_PROD):
+if os.path.exists(CHK_PROD) and os.path.getsize(CHK_PROD) > 1000000:
     CHK_IN = CHK_PROD
-else:
+elif os.path.exists(CHK_EQUIL):
     CHK_IN = CHK_EQUIL
+else:
+    print("ERROR: No checkpoint found!")
+    sys.exit(1)
 
 # Simulation parameters
 TEMPERATURE = 310 * unit.kelvin
 PRESSURE = 1.0 * unit.bar
 TIMESTEP = 2.0 * unit.femtoseconds
 FRICTION = 1.0 / unit.picosecond
-N_STEPS = 100_000_000  # 100 ns
+N_STEPS = 200_000_000  # FIXED: 200 ns (was 100 ns)
 REPORT_INTERVAL = 5000  # 10 ps
 CHECKPOINT_INTERVAL = 500_000  # 1 ns
 DCD_INTERVAL = 5000  # 10 ps
@@ -48,7 +46,7 @@ platform = mm.Platform.getPlatformByName("CUDA")
 platform_props = {"CudaPrecision": "mixed", "CudaDeviceIndex": "1"}
 
 print("=" * 60)
-print("Membrane System Production MD v2")
+print("Membrane System Production MD v2 - FIXED (200 ns target)")
 print(f"Prmtop: {PRMTOP}")
 print(f"Steps:  {N_STEPS} ({N_STEPS * TIMESTEP.in_units_of(unit.nanosecond).value_in_unit(unit.nanosecond):.1f} ns)")
 print(f"Output: {OUT_DIR}")
@@ -76,13 +74,9 @@ simulation = app.Simulation(prmtop.topology, system, integrator, platform, platf
 simulation.context.setPositions(inpcrd.positions)
 
 # Load checkpoint
-if os.path.exists(CHK_IN):
-    with open(CHK_IN, "rb") as f:
-        simulation.context.loadCheckpoint(f.read())
-    print(f"Loaded checkpoint from {CHK_IN}")
-else:
-    print(f"WARNING: No checkpoint found at {CHK_IN}, starting from inpcrd")
-    sys.exit(1)
+with open(CHK_IN, "rb") as f:
+    simulation.context.loadCheckpoint(f.read())
+print(f"Loaded checkpoint from {CHK_IN}")
 
 # Check current step
 current_step = simulation.context.getState().getStepCount()
@@ -94,15 +88,15 @@ if remaining_steps == 0:
     print("Production already complete!")
     sys.exit(0)
 
-# Backup existing files if they exist and are large
-for fname in ["prod.dcd", "prod.log"]:
+# Backup existing prod_v2 files if they exist and are large
+for fname in ["prod_v2.dcd", "prod_v2.log"]:
     fpath = os.path.join(OUT_DIR, fname)
-    if os.path.exists(fpath) and os.path.getsize(fpath) > 100_000_000:  # > 100 MB
+    if os.path.exists(fpath) and os.path.getsize(fpath) > 100_000_000:
         backup = fpath + ".backup_" + time.strftime("%Y%m%d_%H%M%S")
         shutil.copy2(fpath, backup)
         print(f"Backed up {fname} to {backup}")
 
-# Reporters - write to NEW files to avoid overwriting
+# Reporters - write to prod_v2 files
 dcd_path = f"{OUT_DIR}/prod_v2.dcd"
 log_path = f"{OUT_DIR}/prod_v2.log"
 chk_path = f"{OUT_DIR}/prod_v2_checkpoint.chk"
