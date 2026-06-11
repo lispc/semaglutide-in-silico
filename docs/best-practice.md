@@ -173,6 +173,19 @@
 - **gmx trjconv 坐标缩放 bug**：某次 DCD 修复后坐标被放大 10 倍且丢失 box 信息——修复后需用独立的坐标范围 / RMSD / COM 检查确认数据完整性。
 - **gmx make_ndx 使用 PDB 残基编号而非序列残基索引**：当使用 `-merge all` 合并多链时，链 A 保留 39-766，链 B 保留 1-29。`r 728` 选中的是 DPP-IV Val728 而非 GHRH Tyr1。**始终用 `gmx dump` 验证 atom indices。**
 
+- **MDAnalysis 读取 GROMACS 轨迹的单位陷阱**：MDAnalysis 读取 `.gro`/`.xtc` 时，**距离和坐标单位是 Å（不是 nm）**，体积/面积也是 Å³/Å²。常见错误是误以为保留 nm 而乘以 10，导致所有距离放大 10 倍（如膜厚度显示 463 Å）。
+  - **快速验证**：加载一个已知晶体结构，检查任意 CA-CA 距离是否在 ~3.8 Å 量级。
+  - **与原生工具对比**：`gmx distance` 输出的是 nm，而 MDAnalysis 的 `center_of_geometry()` 返回 Å——混用两者会直接产生 10× 误差。
+
+- **单残基 RMSD 对齐崩溃**：MDAnalysis `RMSD(align_sel=...)` 要求选择器返回非空原子组。单残基修饰（如棕榈酰化的 Cys、linker、非标准残基）通常没有 CA 原子，`align_sel="name CA and resindex X"` 会返回空组导致崩溃。
+  - **解决**：对该区域设 `align_sel=None`（跳过对齐，仅计算 RMSD），或改用 `name C* N* O*` 等重原子集合。
+
+- **H-bond 分析对非标准残基的不兼容**：`MDAnalysis.analysis.hbonds.hbond_analysis` 在遇到某些非标准残基（修饰氨基酸、N-terminal 特殊氢规则、缺失 `donors.txt`/ `acceptors.txt` 条目的残基）时，可能抛出 `list index out of range` 而中断。
+  - **解决**：先用标准残基子集（如 "protein and standard_resnames"）测试 h-bond 分析通路，确认稳定后再扩展到修饰区域。必要时改用距离/角度自定义筛选替代内置 hbond 分析器。
+
+- **Contact 分析的全原子性能陷阱**：全原子 contact 分析（如蛋白 ~18k atoms × 脂质 ~10k atoms）在 9000 帧轨迹上可能需要数小时。改用代理原子（蛋白 CA + 脂质磷酸 P）可将计算量降低 2-3 个数量级，且对界面接触数的统计趋势影响极小。
+  - **代理选择原则**：蛋白用 CA（或 backbone heavy），脂质用 P（或 headgroup N/O），水/离子通常不参与接触分析。
+
 ### 21. GROMACS 原子选择教训
 
 - `gmx make_ndx r N` 选择的是 **PDB residue number**，不是 sequential residue index。
@@ -330,6 +343,9 @@ paper/              # 论文手稿
 - [ ] PBC 已处理（GROMACS 轨迹）
 - [ ] 原子索引已验证（`gmx dump`）
 - [ ] 分析脚本已与独立方法核对
+- [ ] **MDAnalysis 单位已确认**：距离/坐标为 Å，非 nm；与 `gmx distance`（nm）混用时要 ×10 转换
+- [ ] **RMSD 对齐选择器非空**：单残基（修饰 Cys、linker）无 CA，需设 `align_sel=None` 或改用重原子
+- [ ] **Contact 分析原子选择已优化**：避免全原子级联，优先用 CA（蛋白）+ P（脂质头）代理
 - [ ] 了解数据的缺失/缺口
 - [ ] 关键的 ndx 文件已保存并注释
 
@@ -362,5 +378,5 @@ paper/              # 论文手稿
 
 ---
 
-*最后更新：2026-05-26*
+*最后更新：2026-06-11*
 *来源：naked-mole-rat-cgas-trim41-simulation + cjc-1295 两个项目的完整经验回顾*

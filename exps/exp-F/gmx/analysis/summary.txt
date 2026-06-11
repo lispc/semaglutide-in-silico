@@ -1,0 +1,36 @@
+================================================================================
+GROMACS MEMBRANE MD ANALYSIS SUMMARY
+================================================================================
+Trajectory: /home/scroll/personal/semaglutide-in-silico/exps/exp-F/gmx/md.xtc
+Protein trajectory: /home/scroll/personal/semaglutide-in-silico/exps/exp-F/gmx/analysis/md_protein_whole.xtc
+Frames analyzed: 2001 (step=10)
+Simulation time: 200.0 ns
+
+--- RMSD (Aligned on ECD CA, Å) ---
+Protein CA:  8.66 ± 2.09
+ECD CA:      8.70 ± 2.09
+GLP-1 CA:    2.12 ± 0.56
+LNK Heavy:   4.35 ± 0.75
+
+--- RADIUS OF GYRATION (Å) ---
+Protein:     39.5 ± 0.7
+ECD:         39.2 ± 0.7
+GLP-1:       10.0 ± 0.3
+
+--- RMSF (Å) ---
+ECD CA max:  17.17 (resindex 813)
+GLP-1 CA max: 2.71 (resindex 0)
+
+--- LNK POSITION ---
+Relative to mem: 42.62 ± 5.08 Å
+Tilt angle:      57.0 ± 21.5°
+
+--- MEMBRANE ---
+Area/lipid:  82.8 ± 0.8 Å²
+Thickness:   46.4 ± 0.7 Å
+
+--- CONTACTS (<5Å) ---
+ECD-Lipid:   3.2 ± 1.6
+GLP-1-Lipid: 0.0 ± 0.2
+LNK-Lipid:   0.0 ± 0.1
+======================================================================
