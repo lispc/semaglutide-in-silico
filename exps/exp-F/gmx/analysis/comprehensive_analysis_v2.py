@@ -43,7 +43,7 @@ XTC_FULL = f"{GMX_DIR}/md.xtc"
 EDR = f"{GMX_DIR}/md.edr"
 
 # PBC-corrected protein trajectory (for protein analysis)
-GRO_PROT = f"{OUTDIR}/protein_ref.gro"
+GRO_PROT = f"{OUTDIR}/protein_ref_correct.gro"
 XTC_PROT = f"{OUTDIR}/md_protein_whole.xtc"
 
 STEP = 10  # every 10 frames = 20 ps
@@ -521,7 +521,12 @@ try:
     var = (s**2) / np.sum(s**2)
     cumvar = np.cumsum(var)
     
-    df_pca_var = pd.DataFrame({'PC': range(1, 11), 'Variance': var, 'Cumulative': cumvar})
+    n_pcs = min(10, len(var))
+    df_pca_var = pd.DataFrame({
+        'PC': range(1, n_pcs + 1),
+        'Variance': var[:n_pcs],
+        'Cumulative': cumvar[:n_pcs]
+    })
     df_pca_var.to_csv(f"{OUTDIR}/pca_variance.csv", index=False)
     
     # Project onto first 2 PCs
@@ -547,6 +552,8 @@ try:
     log(f"  PC1: {var[0]:.4f}, PC2: {var[1]:.4f}, Top5 cum: {cumvar[4]:.4f}")
 except Exception as e:
     log(f"  PCA failed: {e}")
+    import traceback
+    log(f"  PCA traceback: {traceback.format_exc()}")
 
 # =============================================================================
 # 11. SUMMARY
