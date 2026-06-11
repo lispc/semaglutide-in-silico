@@ -448,24 +448,37 @@ log("\n[9] Hydrogen bond analysis (GLP-1-ECD interface only)...")
 def run_hbonds(u_obj, sel1_str, sel2_str, label, step=STEP):
     log(f"  {label}...")
     try:
+        # Explicit donor/acceptor atom selections. MDAnalysis' auto-guessing
+        # requires charge information (e.g. from tpr/prmtop), but our gro-based
+        # topology lacks charges. We therefore list common protein donor and
+        # acceptor atom names explicitly.
+        donor_atoms = (
+            'name N or name NH1 or name NH2 or name NE or name ND or name NZ '
+            'or name OG or name OH or name NE1 or name NE2 or name ND1 or name ND2'
+        )
+        acceptor_atoms = (
+            'name O or name OG or name OG1 or name OG2 or name OD1 or name OD2 '
+            'or name OE1 or name OE2 or name OH or name ND1 or name ND2 or name NE1 or name NE2'
+        )
         hb = HydrogenBondAnalysis(
             universe=u_obj,
-            donors_sel=sel1_str,
-            hydrogens_sel=sel1_str,
-            acceptors_sel=sel2_str,
+            donors_sel=f'({sel1_str}) and ({donor_atoms})',
+            hydrogens_sel=f'({sel1_str}) and (name H*)',
+            acceptors_sel=f'({sel2_str}) and ({acceptor_atoms})',
             d_a_cutoff=3.5,
             d_h_a_angle_cutoff=150,
             update_selections=False,
         )
         hb.run(step=step, verbose=False)
-        n_frames = len(u_obj.trajectory[::step])
-        counts = [0] * n_frames
-        if len(hb.results.hbonds) > 0:
-            for row in hb.results.hbonds:
-                counts[int(row[0])] += 1
-        return np.array(counts)
+        # count_by_time() correctly handles step mapping and returns one count
+        # per analysed frame (length = n_frames_with_step).
+        counts = hb.count_by_time()
+        log(f"    Average H-bonds per frame: {np.mean(counts):.2f}")
+        return counts
     except Exception as e:
         log(f"    Failed: {e}")
+        import traceback
+        log(f"    Traceback: {traceback.format_exc()}")
         return None
 
 try:

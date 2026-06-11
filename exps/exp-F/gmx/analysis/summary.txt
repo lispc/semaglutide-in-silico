@@ -29,6 +29,9 @@ Tilt angle:      57.0 ± 21.5°
 Area/lipid:  82.8 ± 0.8 Å²
 Thickness:   46.4 ± 0.7 Å
 
+--- H-BONDS ---
+GLP-1-ECD:   1.6 ± 1.1
+
 --- CONTACTS (<5Å) ---
 ECD-Lipid:   3.2 ± 1.6
 GLP-1-Lipid: 0.0 ± 0.2
