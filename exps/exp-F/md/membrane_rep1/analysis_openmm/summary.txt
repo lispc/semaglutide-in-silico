@@ -1,0 +1,44 @@
+================================================================================
+OPENMM MEMBRANE MD ANALYSIS SUMMARY
+================================================================================
+Trajectory: /home/scroll/personal/semaglutide-in-silico/exps/exp-F/md/membrane_rep1/prod_v2.dcd
+Protein trajectory: /home/scroll/personal/semaglutide-in-silico/exps/exp-F/md/membrane_rep1/prod_v2.dcd
+Frames analyzed: 2245 (step=10)
+Simulation time: 224.4 ns
+
+--- RMSD (Aligned on ECD CA, Å) ---
+Protein CA:  4.67 ± 0.62
+ECD CA:      4.68 ± 0.62
+GLP-1 CA:    1.48 ± 0.28
+LNK Heavy:   4.21 ± 0.86
+
+--- RADIUS OF GYRATION (Å) ---
+Protein:     38.9 ± 0.4
+ECD:         38.5 ± 0.4
+GLP-1:       11.0 ± 0.3
+
+--- RMSF (Å) ---
+ECD CA max:  15.77 (resindex 612)
+GLP-1 CA max: 2.15 (resindex 25)
+
+--- LNK POSITION ---
+Relative to mem: 40.55 ± 3.14 Å
+Tilt angle:      73.5 ± 12.8°
+
+--- MEMBRANE ---
+Area/lipid:  85.9 ± 0.1 Å²
+Thickness:   44.2 ± 0.6 Å
+
+--- H-BONDS ---
+GLP-1-ECD:   0.5 ± 0.8
+
+--- CONTACTS (<5Å) ---
+ECD-Lipid:   16.1 ± 6.4
+GLP-1-Lipid: 0.0 ± 0.1
+LNK-Lipid:   0.0 ± 0.2
+
+--- PCA ---
+PC1 variance: 0.4920
+PC2 variance: 0.1173
+Top5 cum:     0.7408
+======================================================================
