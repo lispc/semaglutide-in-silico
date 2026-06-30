@@ -1,0 +1,4 @@
+parm /home/scroll/personal/semaglutide-in-silico/exps/exp-F/membrane_build/system_final.prmtop
+trajin /home/scroll/personal/semaglutide-in-silico/exps/exp-F/md/membrane_equil/equilibrated.pdb
+trajout /home/scroll/personal/semaglutide-in-silico/exps/exp-F/gmx/system.gro gro
+run

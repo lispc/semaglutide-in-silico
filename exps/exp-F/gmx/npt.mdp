@@ -1,0 +1,32 @@
+; NPT equilibration for membrane (semi-isotropic)
+integrator      = md
+dt              = 0.002
+nsteps           = 500000      ; 1 ns
+nstxout-compressed = 5000
+nstlog          = 5000
+nstenergy       = 5000
+cutoff-scheme   = Verlet
+coulombtype     = PME
+rcoulomb        = 1.0
+vdwtype         = Cut-off
+rvdw            = 1.0
+; Temperature coupling
+tcoupl          = v-rescale
+tc-grps         = Protein_and_LNK Lipid Water_and_Ions
+tau-t           = 0.1 0.1 0.1
+ref-t           = 310 310 310
+; Semi-isotropic pressure coupling (membrane standard)
+pcoupl          = C-rescale
+pcoupltype      = semiisotropic
+tau-p           = 2.0
+ref-p           = 1.0 1.0
+compressibility = 4.5e-5 4.5e-5
+refcoord-scaling = com
+pbc             = xyz
+constraints     = h-bonds
+constraint-algorithm = LINCS
+lincs_iter      = 2
+lincs_order     = 6
+; Neighbor list
+nstlist         = 40
+rlist           = 1.1

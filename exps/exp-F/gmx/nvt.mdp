@@ -1,0 +1,32 @@
+; NVT heating with annealing
+integrator      = md
+dt              = 0.002
+nsteps           = 50000       ; 100 ps
+nstxout-compressed = 5000
+nstlog          = 5000
+nstenergy       = 5000
+cutoff-scheme   = Verlet
+coulombtype     = PME
+rcoulomb        = 1.0
+vdwtype         = Cut-off
+rvdw            = 1.0
+; Temperature coupling
+tcoupl          = v-rescale
+tc-grps         = Protein_and_LNK Lipid Water_and_Ions
+tau-t           = 0.1 0.1 0.1
+ref-t           = 310 310 310
+; Annealing: 100K -> 310K over 100ps
+annealing       = single single single
+annealing-npoints = 2 2 2
+annealing-time  = 0 100 0 100 0 100
+annealing-temp  = 100 310 100 310 100 310
+; No pressure coupling
+pcoupl          = no
+pbc             = xyz
+constraints     = h-bonds
+constraint-algorithm = LINCS
+lincs_iter      = 2
+lincs_order     = 6
+; Neighbor list
+nstlist         = 40
+rlist           = 1.1

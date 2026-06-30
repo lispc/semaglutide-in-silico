@@ -1,0 +1,10 @@
+source leaprc.lipid21
+source leaprc.protein.ff14SB
+source leaprc.water.tip3p
+SYS = loadpdb membrane_system.pdb 
+setBox SYS vdw
+addionsrand SYS K+ 0
+addionsrand SYS Cl- 0
+savepdb SYS membrane_system_lipid.pdb
+saveAmberParmNetcdf SYS membrane_system_lipid.top membrane_system_lipid.crd
+quit

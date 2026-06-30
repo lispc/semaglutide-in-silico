@@ -1,0 +1,4 @@
+parm system_final.prmtop
+trajin system_final.inpcrd
+parminfo
+run

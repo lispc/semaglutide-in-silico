@@ -1,0 +1,32 @@
+# Membrane system tleap input
+source leaprc.lipid21
+source leaprc.protein.ff14SB
+source leaprc.water.tip3p
+source leaprc.gaff2
+
+# Load LNK parameters
+loadAmberParams /home/scroll/personal/semaglutide-in-silico/exps/exp-F/build/lya_link_final.frcmod
+LNK = loadMol2 /home/scroll/personal/semaglutide-in-silico/exps/exp-F/build/lnk_noh.mol2
+
+# Load the membrane system
+SYS = loadPdb membrane_system.pdb
+
+# Remove OXT from GLY 1139 (C-terminal, but tleap sees LNK after it)
+remove SYS SYS.1139.OXT
+
+# Remove HZ atoms from LYS 1130 to prepare for amide bond with LNK
+remove SYS SYS.1130.HZ1
+remove SYS SYS.1130.HZ2
+remove SYS SYS.1130.HZ3
+
+# Create amide bond between LYS NZ and LNK carbonyl C
+bond SYS.1130.NZ SYS.1140.C
+
+# Set periodic box (from packmol dimensions)
+setBox SYS vdw
+
+# Save outputs
+savePdb SYS membrane_final.pdb
+saveAmberParm SYS membrane.prmtop membrane.inpcrd
+
+quit
