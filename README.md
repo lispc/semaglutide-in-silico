@@ -104,16 +104,16 @@ Planned aggregate sampling: ~47 µs across 35+ systems (4× RTX 3090).
 
 ## Current Status
 
-Last major update: 2026-06-11
+Last major update: 2026-07-17
 
 | Item | Status | Notes |
 |------|--------|-------|
 | Phase 0 infrastructure | ✅ Complete | ff14SB + GAFF2 + TIP3P pipeline; Aib parameterization; GROMACS/OpenMM cross-checks |
-| exp-A (DPP-4) | ✅ Complete | Aib8 double-methyl consistently pushes the peptide away from the DPP-4 active site |
+| exp-A (DPP-4) | ✅ Complete (1 replica) | Aib8 double-methyl consistently pushes the peptide away from the DPP-4 active site; formal criterion (WT ≤3.5 Å) not met — conclusions are relative, MM-PBSA not yet computed |
 | exp-C (HSA acyl chain) | ✅ Complete (reduced sampling) | Free fatty acid anchors at Arg482; attached linker causes the acyl tail to escape into water — hydrophilic OEG is the dominant driver |
-| exp-D (linker) | ⚠️ Preliminary | 5 linker variants × ~100 ns × 3 replicas; qualitative geometric trend matches Lau Table 3, but differences are within error bars and MM-GBSA is not yet available |
-| exp-F membrane system | 🔄 Running | Production MD ~71 ns / 100 ns; membrane environment stabilizes the receptor (RMSD ~8 Å) |
-| exp-F minimal ECD model | 🔄 Running | ~8.7 ns / 100 ns; peptide + linker extremely stable (RMSD ~0.4 Å) |
+| exp-D (linker) | ⚠️ Preliminary | 4 linker variants × ~100 ns × 3 replicas (γGlu excluded after NaN); qualitative geometric trend matches Lau Table 3, but differences are within error bars and MM-GBSA is not yet available |
+| exp-F membrane system | ✅ Complete (1 replica) | GROMACS 200 ns + OpenMM 224 ns cross-validation; membrane stabilizes the receptor (protein CA RMSD 8.7 / 4.7 Å per engine vs ~32 Å without membrane); acyl tail stays in water (40.6–42.6 Å from membrane center, zero lipid contacts) |
+| exp-F minimal ECD model | ✅ Complete (1 replica) | 99.3 ns; internal RMSDs stable (ECD 1.4 Å, peptide 2.7 Å), but HSA never approaches the acyl tail (COM ~109 Å) — HSA/receptor competition not yet observed |
 | exp-B (K34R) | ⏸ Paused | ECD-peptide complexes separate in all crystal structures; waiting for AF3/Boltz-1 alternative |
 | exp-E (full SAR) | ⏳ Not started | Pending Phase 1/2 validation |
 
@@ -125,8 +125,8 @@ See `roadmap.md` (Chinese) and `docs/reviews/` for the most detailed status and 
 
 | Component | Choice | Rationale |
 |-----------|--------|-----------|
-| Primary MD engine | **OpenMM 8.5.1** | 30–50% faster than GROMACS on single-GPU setups |
-| Cross-validation engine | **GROMACS** | Mature analysis toolchain; dual-engine sanity checks |
+| Primary MD engine | **OpenMM 8.5.1** (small/medium systems); **GROMACS 2026** (large membrane system) | Engine speed is system-dependent: OpenMM ~178 ns/day on the ~140k-atom exp-A system, but GROMACS is 2.3× faster on the 312k-atom membrane system (96 vs 42 ns/day — see best-practice-v2 #27) |
+| Cross-validation engine | **GROMACS** / **OpenMM** (mutual) | Mature analysis toolchain; dual-engine sanity checks |
 | Protein force field | **ff14SB** | ff19SB CMAP types are incompatible with non-standard Aib |
 | Water model | **TIP3P** | Consistent with ff14SB |
 | Non-standard residues | **AmberTools tleap + ParmEd + GAFF2** | Manual mol2 construction because antechamber (`sqm`/`bondtype`) fails for linker/acyl groups |
@@ -151,11 +151,11 @@ Production protocols:
 
 2. **HSA acyl-chain behavior (exp-C)** — A free C18 di-acid strongly anchors HSA FA3 near Arg482 (~2.8 Å). Once the linker is attached, the fatty-acid tail escapes 32–41 Å from the protein. The escape is driven mainly by the hydrophilic OEG units rather than terminal charge, implying that linker design controls both albumin anchoring and receptor accessibility.
 
-3. **Membrane environment is essential (exp-F)** — In a solvent-only system the GLP-1R transmembrane domain drifts dramatically (RMSD ~32 Å). Embedding the receptor in a POPC/cholesterol bilayer reduces RMSD to ~8 Å and keeps the peptide N-terminus near the receptor.
+3. **Membrane environment is essential (exp-F)** — In a solvent-only system the GLP-1R transmembrane domain drifts dramatically (RMSD ~32 Å). Embedding the receptor in a POPC/cholesterol bilayer reduces protein CA RMSD to 8.7 Å (GROMACS 200 ns) / 4.7 Å (OpenMM 224 ns) and keeps the peptide N-terminus near the receptor.
 
-4. **C18 di-acid does not insert into the membrane** — In the membrane-bound receptor system the acyl tail stays in the aqueous phase (z ≈ 15.4 nm), consistent with the exp-C “linker-FA escape” observation.
+4. **C18 di-acid does not insert into the membrane** — In the membrane-bound receptor system the acyl tail stays in the aqueous phase, 40.6–42.6 Å from the membrane center with zero lipid contacts (consistent across both engines), matching the exp-C "linker-FA escape" observation.
 
-5. **Statistical rigor is being added incrementally** — `common/lib/stats.py` provides Geyer IACT-based effective sample sizes and correlated t-tests; it is being integrated into analysis scripts to replace raw mean±std reporting.
+5. **Statistical rigor is being added incrementally** — `common/lib/stats.py` provides Geyer IACT-based effective sample sizes, replica CV and correlated t-tests; n_eff/CV reporting is wired into the exp-A/exp-D analyses, but formal t-tests between conditions have not yet been run.
 
 ---
 

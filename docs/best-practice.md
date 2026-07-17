@@ -14,6 +14,8 @@
 - **GROMACS 生态更成熟。** `gmx` 命令行工具体系完备（rms, distance, hbond, trjconv, bar 等），分析工具链比 OpenMM + MDAnalysis 组合更一体化。FEP 的 dual-topology 在 GROMACS 中直接可用。
 - **推荐**：生产 MD 优先 OpenMM（快）；需要 FEP、复杂分析时用 GROMACS；跨引擎验证两者都跑。
 
+> ⚠️ **补充（2026-07-17，本条部分 SUPERSEDED）**：以上"OpenMM 快 30-50%"基于此前两个项目的中小体系。semaglutide-in-silico 项目的 312k 原子膜体系实测结论**相反**：GROMACS 2026 达 96.4 ns/day，OpenMM 42.1 ns/day（GROMACS 快 2.3×，详见 `best-practice-v2.md` #27）。注意两次测量中 OpenMM 速度一致（44 vs 42 ns/day），差异主要来自 GROMACS 版本/调参（33 vs 96.4 ns/day）。**引擎速度强依赖体系规模、引擎版本与调参，应按目标体系实测选择，不要从本条外推。**
+
 ### 2. 多 GPU 并行不要 pin CPU
 
 - **`gmx mdrun -pin on` 在多 GPU 并行场景下是性能陷阱。** CJC-1295 项目实测：4 个 mdrun 进程同时跑在 4 张 RTX 3090 上，`-pin on -ntomp 16` 导致 GPU 利用率仅 53%，性能 19 ns/day。去掉 `-pin on` + 降低 `-ntomp` 到 8 后，GPU 利用率恢复到 93%，性能 33 ns/day (+73%)。

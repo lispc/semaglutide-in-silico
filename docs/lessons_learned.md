@@ -4,7 +4,7 @@
 
 ---
 
-## 错误 #1：Lys20–LNK 共价键"缺失"误诊（2025-06-06）
+## 错误 #1：Lys20–LNK 共价键"缺失"误诊（2026-06-06）
 
 ### 症状
 - tleap 日志显示 `bond SYS.117.NZ SYS.129.C` 报错
@@ -48,7 +48,7 @@ print("Number of bonds:", len(u.bonds) if u.bonds else 0)
 
 ---
 
-## 错误 #2：superposition=False RMSD 误导诊断（2025-06-06）
+## 错误 #2：superposition=False RMSD 误导诊断（2026-06-06）
 
 ### 症状
 - ECD v2 100ns MD 的 RMSD 高达 35–55 Å
@@ -91,7 +91,7 @@ rg = sel.radius_of_gyration()
 
 ---
 
-## 错误 #3：分析脚本性能问题（2025-06-06）
+## 错误 #3：分析脚本性能问题（2026-06-06）
 
 ### 症状
 - `analyze_ecd_v2_100ns.py` 运行超时（>30 分钟）
@@ -122,7 +122,8 @@ hsa_rmsf = RMSF(u.select_atoms('name CA and resid 130-711')).run(step=STEP)
 ### 教训
 1. **I/O 是大 MD 分析的瓶颈**：避免重复加载轨迹文件
 2. **`in_memory=True`**：当内存足够时（4GB DCD → ~8GB 内存），使用内存对齐避免临时文件
-3. **全局对齐优于局部对齐**：对多组分体系，用共同的骨架对齐一次，再分别计算各组分的 RMSF
+3. ~~**全局对齐优于局部对齐**：对多组分体系，用共同的骨架对齐一次，再分别计算各组分的 RMSF~~
+   > ⚠️ **SUPERSEDED（2026-06-09）**：本条被后续实践推翻。多组分复合物中全局对齐会把域间运动计入各组分的 RMSF，正确做法是**每个组分独立对齐**（component-wise alignment）。见 `best-practice-v2.md` #18 及 exp-F ECD v2 的修正分析。上文"根本原因"中"可以用同一个全局对齐的轨迹计算 RMSF"同样作废；本条保留仅作为性能优化（避免重复加载、`in_memory=True`、`step` 跳帧）的参考。
 4. **`step` 参数**：分析时跳过帧（如 step=5）可大幅加速，不影响统计可靠性
 
 ---
@@ -152,7 +153,7 @@ hsa_rmsf = RMSF(u.select_atoms('name CA and resid 130-711')).run(step=STEP)
 
 ---
 
-## 错误 #4：膜体系 LNK mol2 含垃圾原子导致 MD 能量灾难（2025-06-06）
+## 错误 #4：膜体系 LNK mol2 含垃圾原子导致 MD 能量灾难（2026-06-06）
 
 ### 症状
 - 膜体系生产 MD（68 ns）中 PE 出现大量跳变：72% 的帧间差 > 1000 kJ/mol
@@ -211,4 +212,4 @@ for bond in prm.bonds:
 
 ---
 
-*最后更新：2025-06-06*
+*最后更新：2026-06-06*

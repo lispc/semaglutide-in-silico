@@ -4,7 +4,7 @@
 >
 > 核心文献：Lau et al., *J. Med. Chem.* **2015**, 58, 7370–7380; Knudsen & Lau, *Front. Endocrinol.* **2019**, 10, 155.
 >
-> 最后更新：2026-06-06
+> 最后更新：2026-07-17
 
 ---
 
@@ -267,29 +267,29 @@ Aib8,Arg34-GLP-1(Lys26-脂链)
 
 ---
 
-## 项目当前进度 (2026-06-08)
+## 项目当前进度 (2026-07-17)
 
 ### 已完成
 
 | 实验 | 状态 | 关键结果 |
 |------|:---:|---------|
-| **exp-A** | ✓ 完成 | Aib8 双甲基在所有 5 个指标上一致推离 DPP-4 活性位点（催化距离 +1.0 Å, S1 CB→W629 +1.7 Å, 接触数 -49） |
+| **exp-A** | ✓ 完成（1 replica） | Aib8 双甲基在所有 5 个指标上一致推离 DPP-4 活性位点（催化距离 +1.0 Å, S1 CB→W629 +1.7 Å, 接触数 -49）。注意：形式判据 WT≤3.5 Å 未达成（实测 5.0 Å），MM-PBSA 未算 |
 | Phase 0 基础设施 | ✓ 完成 | ff14SB + GAFF2 + TIP3P 管线, Aib 参数化, GROMACS nstlist=40 修复 |
+| **exp-C** | ✓ 完成（采样缩减） | 9条100ns完成。游离FA锚定ARG482(2.8Å)。linker接上后FA逃逸(32-41Å)，与末端电荷无关——OEG单元亲水性是主因 |
+| **exp-D** | ⚠️ 完成，结论降级 | 4 linker变体~100ns×3完成（实际 ~95–102 ns，为计划 500 ns 的 ~1/5；γGlu 因 NaN 排除）。NZ-C bond修复(1.51A)。初步几何趋势与 Lau 2015 Table 3 方向一致，但**差异在误差棒内、无统计检验、无 MM-GBSA**，不足以宣称"复现设计逻辑"。详见 `docs/reviews/claude-Jun06.md` §3.1 |
+| **exp-F 膜体系** | ✓ 完成（1 replica） | GROMACS 200 ns + OpenMM 224 ns 交叉验证完成。膜稳定受体（蛋白 CA RMSD 8.7/4.7 Å vs 无膜 ~32 Å）；LNK 尾部距膜中心 40.6–42.6 Å、零脂质接触——脂链不插膜 |
+| **exp-F ECD v2** | ✓ 完成（1 replica） | 最小功能模型 99.3 ns 完成。内部 RMSD 稳定（ECD 1.4 Å、肽 2.7 Å、Lys-LNK 键 1.39 Å），但 HSA 与脂链从未接近（COM ~109 Å）——HSA-受体竞争未观测到 |
 | **ECD v2 构建** | ✓ 完成 | HSA N-domain + 肽 + ECD + Linker (~145k atoms)。关键修复：跳过 H 原子避免 NGLY 模板冲突、tleap 显式 bond Lys26-LNK |
 
-### 进行中
+### 暂停
 
 | 实验 | 状态 | 详情 |
 |------|:---:|------|
-| **exp-C** | ✓ 完成 | 9条100ns完成。游离FA锚定ARG482(2.8Å)。linker接上后FA逃逸(32-41Å)，与末端电荷无关——OEG单元亲水性是主因 |
-| **exp-D** | ⚠️ 数据就绪，结论降级 | 5 linker变体~100ns×3完成（实际 ~95–102 ns，为计划 500 ns 的 ~1/5）。NZ-C bond修复(1.51A)。初步几何趋势与 Lau 2015 Table 3 方向一致，但**差异在误差棒内、无统计检验、无 MM-GBSA**，不足以宣称"复现设计逻辑"。详见 `docs/reviews/claude-Jun06.md` §3.1 |
-| **exp-F 膜体系** | ✅ 进行中 | 膜体系 production MD ~71.7% 完成（~71 ns / 100 ns），GPU 1，预计 ~16 h 剩余。LNK 尾部经 COM 校正后距膜表面 3.6 ± 2.6 Å |
-| **exp-F ECD v2** | ✅ 进行中 | 最小功能模型 production MD ~8.7% 完成（8.7 ns / 100 ns），GPU 0，预计 ~20 h 剩余。结构验证：Peptide RMSD 0.44 Å, Linker RMSD 0.32 Å — 极其稳定；HSA 仍在弛豫 |
 | **exp-B** | ⏸ 暂停 | ECD-肽复合物在所有晶体结构中均分离 25-40 Å，FlexPepDock 无法修复。等待 AF3/Boltz-1 替代方案 |
 
 ### 待启动
 
-exp-E (SAR 复现), exp-F production MD — Phase 1/2 验证 ✅
+exp-E (SAR 复现，前置条件未满足：exp-A 多 replica、exp-D 统计检验)；exp-F/exp-A replica 2/3；exp-A/C/D MM-GBSA
 
 ### 能力边界与方法学一致性（2026-06-06 补充）
 
@@ -317,8 +317,8 @@ exp-E (SAR 复现), exp-F production MD — Phase 1/2 验证 ✅
 - **packmol-memgen `renumber=True` 导致残基号冲突**：`MembraneParams.pdb_reindex()` 将蛋白残基按链重新编号从 1 开始，`charmmlipid2amber.py` 仅以 `(chain, resnum)` 识别残基，导致脂质与蛋白残基合并、肽键断裂。必须使用自定义 merge pipeline 绕过
 - **PDB 固定宽度格式的隐性陷阱**：Python f-string `{resname:>3s}{chain:>1s}` 在 4-char resname（如 `WATA`）时会导致 chainID 移至 col 21，坐标列整体左偏 1 列，相邻负值合并为无效坐标。必须在 resName 和 chainID 之间保留显式空格
 - **膜系统规模低于预期**：加膜后 312k atoms < 溶剂化 363k atoms。原因是 packmol 生成的膜 box 小于 oct 溶剂化 box，且脂质密度合理
-- **膜环境是受体稳定性的必要条件**：溶剂化体系中 GLP-1R TMD 在 25 ns 内漂移 32 Å（RMSD），膜体系中仅 8 Å。无膜的溶剂化体系数据不可靠
-- **司美格鲁肽 C18 二酸尾部不插入膜**：膜体系 16.9 ns 轨迹显示 LNK 尾部（z=15.4 nm）远离膜中心，与 exp-C "linker-FA 逃逸"一致。脂链的亲水二酸末端倾向于留在水相
+- **膜环境是受体稳定性的必要条件**：溶剂化体系中 GLP-1R TMD 在 25 ns 内漂移 32 Å（RMSD），膜体系中蛋白 CA RMSD 4.7–8.7 Å（OpenMM 224 ns / GROMACS 200 ns）。无膜的溶剂化体系数据不可靠
+- **司美格鲁肽 C18 二酸尾部不插入膜**：膜体系完整轨迹（GROMACS 200 ns / OpenMM 224 ns）显示 LNK 尾部距膜中心 40.6–42.6 Å、零脂质接触，与 exp-C "linker-FA 逃逸"一致。脂链的亲水二酸末端倾向于留在水相（早期 16.9 ns 分析中的 z=15.4 nm 为 COM 校正前的错误值，已作废）
 - **溶剂化体系的 equilibration 必须包含膜或强约束**：250 ps equilibration 不足以稳定 363k atoms 的无膜受体体系。若需无膜体系，必须对 TMD 加约束或延长 equilibration 至 >1 ns
 - **OpenMM DCD 的 box 类型可能与 prmtop 不匹配**：cpptraj 读取 DCD 时报告 "Trajectory box type is Rhombohedral but topology box type is Truncated octahedron"。实际应为正交盒（膜体系），需用 `box` 命令强制修正
 - **tleap 跳过 H 原子可避免 NGLY/CGLY/ACE 模板冲突**：ECD v2 构建中，HSA + 肽 + ECD + LNK 组合时，N-terminal GLY 同时带有 H 原子和 ACE 帽，导致 tleap NGLY 模板坐标不匹配报错。在 build 脚本中跳过所有 H 原子（`if element == 'H': continue`），让 tleap 自动补全，可消除该冲突
@@ -350,7 +350,7 @@ exp-E (SAR 复现), exp-F production MD — Phase 1/2 验证 ✅
 
 | 组件 | 选择 | 说明 |
 |------|------|------|
-| 生产引擎 | **OpenMM** 为主，GROMACS 交叉验证 | OpenMM 快 30–50%（best-practice §1） |
+| 生产引擎 | 中小体系 **OpenMM**，大膜体系 **GROMACS 2026**；互为交叉验证 | 速度依赖体系规模与版本：exp-A ~140k atoms OpenMM ~178 ns/d；312k 膜体系 GROMACS 96.4 vs OpenMM 42.1 ns/d（best-practice-v2 #27；v1 §1 的旧结论已标注部分 SUPERSEDED） |
 | 蛋白力场 | **ff14SB**（非 ff19SB） | ff19SB 的 CMAP 类型不支持非标准 Aib 残基 |
 | 水模型 | TIP3P | 与力场配套 |
 | 非标准残基 | AmberTools tleap + ParmEd 修改 | Aib8: WT→ALA→ParmEd→AIB; 脂化 Lys: GAFF2 手动 mol2 |
