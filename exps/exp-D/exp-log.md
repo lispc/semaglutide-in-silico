@@ -253,3 +253,45 @@ NZ-C 键修复验证成功：
 ---
 *维护者：Claude Code*
 *最后更新：2026-06-06*
+
+---
+
+## 2026-07-17 — exp-D 重启：拓扑重建与 12 replica 生产启动
+
+### 背景
+原有 prmtop/inpcrd 与轨迹全部丢失。重建 4 变体（no_linker, gglu_1oeg/2oeg/3oeg；γGlu-only 仍排除）拓扑，重跑 3 replica × 100 ns 为 correlated t-test 采数。
+
+### 发现的原始输入缺陷（lnk_*_pos.mol2）
+1. 每文件 13–17 个孤立 H 原子（strip 残留，游离溶剂中）
+2. strip_lya.py 硬编码删除名单只匹配 no_linker/gglu 布局：1oeg 丢 3 个链内原子（断链成 4 段）、1oeg/2oeg/3oeg 的 NME cap 未删（漂浮在 ~7 Å 外）
+3. 无 BOND 表；内部酰胺全部误标 c3/o（酰胺键自由旋转）；电荷为按元素平均的占位值（非 AM1-BCC，且逐变体不一致）
+4. MMFF 折叠构象穿过 ECD 表面（重原子重叠最低 0.48 Å）——与当年 gglu NaN 同类风险
+
+### 重建流程
+`build/rebuild_lnk_mol2.py`（结构感知 strip：删 ACE/backbone/sidechain/N10/NME + GAFF2 类型重标 + BOND 表转移，保留 bcc 电荷与锚定几何）→ `build/idealize_lnk_geom.py`（理想化链几何：C11 锚定 NZ+1.38 Å 沿 CE→NZ 轴，贪心二面角扫描+精炼，蛋白最小距离 2.68 Å、自接触 ≥2.46 Å）→ tleap（combine + `remove` Lys26 HZ1/2/3 + `bond` NZ-C11；本次均正常工作——此前的静默失败是 ParmEd 生成 PDB 格式特异的）→ `build/fix_prmtop_bonds.py` 验证。
+
+关键补丁与适配：
+- `tleap/lya_link_c8.frcmod`：ff14SB Lys CE 是 **C8** 不是 CT，原 lya_link.frcmod 的 `CT-N3-c-*` 二面角从未生效（tleap 报 missing torsion 且**拒绝保存 prmtop**）；按 CT 版同值补 `C8-N3-c-o` / `C8-N3-c-c3`。注意 frcmod DIHE 段必须用紧凑无空格格式（`C8-N3-c -o`），原文件带空格格式在 DIHE 段不解析。
+- 本版 AmberTools 的 `addIonsRand` 不接受 `Na+ 0 Cl- 0`，改用 `addIons complex Na+ 0` + `addIons complex Cl- 0`。
+- 只脱质子化 Lys26（其他 2 个 LYS 保留 6 个 HZ；旧 fix_bonds.py 曾误删所有 LYS 的 HZ）。
+
+### Frame-0 验证
+
+| Variant | Atoms | Waters | Na+ | NZ-C11 | LNK 键/角/二面角 | min500 PE (kJ/mol) |
+|---------|------:|-------:|----:|:------:|:----------------:|:------------------:|
+| no_linker | 36,682 | 11,547 | 8 | 1.38 Å ✓ | 52/100/165 | -569,861 |
+| gglu_1oeg | 36,812 | 11,579 | 8 | 1.38 Å ✓ | 86/162/285 | -571,710 |
+| gglu_2oeg | 36,816 | 11,574 | 6 | 1.38 Å ✓ | 107/200/356 | -569,545 |
+| gglu_3oeg | 36,579 | 11,487 | 9 | 1.38 Å ✓ | 128/238/427 | -567,864 |
+
+- NZ-C11 酰胺键全部存在（1.38 Å），0 个未参数化键/角/二面角，溶质重原子无 <1.9 Å 非键接触
+- 净电荷残余 ±0.07~0.35 e（占位电荷的分数尾差，PME plasma 中和；与原生产方案一致）
+- 已知遗留：LNK 电荷仍是按元素平均的占位值（与原生产一致，未改 AM1-BCC；若需严格电荷可比性，应 4 变体统一重做 BCC 后重建）
+
+### 生产队列
+- `md/launch_queue.sh`：GPU0 = no_linker + gglu_1oeg（6 replica 串行），GPU1 = gglu_2oeg + gglu_3oeg；GPU2/3 留给 exp-A
+- 首批检查（启动 ~3.5 min）：no_linker rep1 min PE -591,612，生产 1.04 ns T=307.5 K PE=-475,450 kJ/mol；gglu_2oeg rep1 min PE -590,515，生产 1.08 ns T=309.4 K PE=-475,075 kJ/mol；385–398 ns/d/GPU，无 NaN
+- 预计单 replica ~6 h，12 个共 ~36–38 h
+
+---
+*维护者：Kimi Code*

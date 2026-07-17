@@ -46,6 +46,10 @@ def run(system_name, replica=1, nsteps=50_000_000, gpu="0"):
         system.addForce(ca_force)
         print(f"Restraints: {count} CA")
 
+    # Barostat must be added BEFORE Simulation() so NPT actually runs as NPT
+    # (Review claude-Jun06 section 3.2)
+    system.addForce(mm.MonteCarloBarostat(1*unit.bar, 310*unit.kelvin))
+
     print("Creating CUDA context...", flush=True)
     integrator = mm.LangevinIntegrator(310*unit.kelvin, 1.0/unit.picoseconds, 2.0*unit.femtoseconds)
     integrator.setRandomNumberSeed(replica * 42)
@@ -58,9 +62,6 @@ def run(system_name, replica=1, nsteps=50_000_000, gpu="0"):
     simulation.reporters.append(app.StateDataReporter(f"{md_dir}/{system_name}_log.txt", 10000,
         step=True, time=True, potentialEnergy=True, kineticEnergy=True, temperature=True, volume=True, density=True, speed=True))
     simulation.reporters.append(app.CheckpointReporter(f"{md_dir}/{system_name}_checkpoint.chk", 500000))
-
-    # Add barostat BEFORE Simulation context creation
-    system.addForce(mm.MonteCarloBarostat(1*unit.bar, 310*unit.kelvin))
 
     simulation.context.setPositions(amber.positions)
     print("Minimizing...")

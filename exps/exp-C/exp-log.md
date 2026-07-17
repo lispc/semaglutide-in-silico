@@ -218,3 +218,48 @@ exp-C 结论：linker 接上后 FA 逃逸 HSA FA3（无论末端电荷）。转 
 ---
 *维护者：Claude Code*
 *最后更新：2026-05-31*
+
+## 2026-07-17 — 重启：游离 FA 体系重建（为 MM-GBSA 采集轨迹）
+
+### 背景
+
+- 原有游离 FA 轨迹与拓扑丢失，重建 2 体系（HSA + 游离 C18 单酸 / C18 二酸）×3 replica ×100 ns，核心目标：MM-GBSA 对比单酸 vs 二酸（"二酸优于单酸"验证）
+
+### 结构准备
+
+- 重新下载 1E7G → `structures/1E7G.pdb`；`tleap/prep_hsa.py` 生成 `hsa_no_myr.pdb`（去 8×MYR/HOH；34 个二硫键 Cys 改 CYX；582 残基 3–584）
+- 旧文档 "ARG482" 编号考据：= canonical ARG485（0-based 重编号所致）；tleap 拓扑中为残基 483；另一锚点为 canonical ARG348（tleap 346）
+
+### FA 构建（`tleap/build_fa_fa3.py`，替代原 build_monoacid*.py / build_diacid_v2.py）
+
+- **发现原构建脚本严重几何缺陷**：每键绕固定轴 +112° 旋转 → 实际内角 68°（应为 112°），链自蜷曲，C01–C17 重叠 0.13 Å，初始 PE 3.8×10¹⁷ kJ/mol（2026-05-27 的 NaN 不只因缺 H，链几何也是炸弹）
+- 新策略：C1X/C1D 精确置于 MYR 1003 羧基 C 上，O1D/O2D 按理想 sp2 几何落在晶体 O 上（偏差 0.03/0.02 Å）；C01–C10 用晶体 C2–C11 坐标；C11–C18 全周二面角贪心扫描避撞（晶体显示 MYR C12+ 无序，口袋深部空旷）；二酸近端羧基同样扫描整组避撞
+- 单酸 58 atoms（21 重 + 37 H）q=−1.000；二酸 60 atoms（24 重 + 36 H）q=−2.000；电荷经 4 位小数归一精确为整数
+
+### tleap 构建（Errors=0）
+
+- 两体系均 Errors=0（各 2 Warnings，仅 NHIE/CGLY 命名提示）
+- 单酸：86,428 atoms（与历史 86,428 完全一致），25,723 水，15 Na⁺
+- 二酸：86,428 atoms，25,722 水，16 Na⁺；净电荷均 ±0.0000
+
+### frame-0 验证（`tleap/frame0_validation.txt`，`validate_frame0.py`）
+
+- FAH 58/60 原子全连通、无孤立原子、羧基 C 价态 3 ✓；HSA 582 残基 ✓
+- 远端羧基锚定：O1D→ARG483(NE) 2.78 Å、ARG346(NH2) 2.82 Å（两体系一致，= 晶体 MYR 的 2.80 Å 位姿）
+- CPU 烟测：200 步最小化后 PE −1.084×10⁶ / −1.156×10⁶ kJ/mol（历史范围 −1.07×10⁶）
+
+### run_md.py barostat bug（已修）
+
+- `md/run_md.py` 原代码在 `Simulation()` **之后**才 `addForce(MonteCarloBarostat)`（注释却写 BEFORE）；OpenMM 8.5.2 实测不报错，但 barostat 不进入已建 Context（后加 Force 对已有 Context 无效）→ 原 NPT 加热/生产实为 NVT
+- 修复：barostat 移至 `createSystem`/`add_restraints` 之后、`Simulation()` 之前；restart 分支也补上（原 restart 完全无 barostat）
+- `common/scripts/run_md.py`（exp-A）此前已按 claude-Jun06 §3.2 修复，无需动
+
+### MD 排队
+
+- `md/launch_queue.sh` 已 setsid 启动（PID 2436125）：先 `while pgrep -f "common/scripts/run_md.py"` 等待 exp-A（GPU 2/3）结束，然后 GPU2=单酸 ×3、GPU3=二酸 ×3 串行，各 100 ns（50M 步）
+- 日志：`md/queue.log` + `md/<system>/rep<i>/md_output.log`
+- GPU 0/1（exp-D 保留）不使用
+
+---
+*维护者：Kimi Code*
+*最后更新：2026-07-17*

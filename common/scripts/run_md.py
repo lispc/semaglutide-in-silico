@@ -158,6 +158,12 @@ def run(mode, restart=None, nsteps=None):
             simulation.context.loadCheckpoint(f.read())
     else:
         simulation.context.setPositions(pdb.positions)
+        # Fresh tleap coordinates contain water clashes; minimize before heating.
+        # (Fresh rebuild on 2026-07-17 NaN'd immediately without this.)
+        print("Minimizing (max 10000 iterations)...")
+        simulation.minimizeEnergy(maxIterations=10000)
+        min_state = simulation.context.getState(getEnergy=True)
+        print(f"  PE after minimize: {min_state.getPotentialEnergy().value_in_unit(unit.kilojoules_per_mole):.0f} kJ/mol")
 
     # Determine production steps
     if nsteps is None:

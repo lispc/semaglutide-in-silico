@@ -1,0 +1,4 @@
+C8-N3-c dihedral patch (canonical packed format; values same as CT versions in lya_link.frcmod)
+DIHE
+C8-N3-c -o     1    2.50     180.000       2.000
+C8-N3-c -c3    1    2.50     180.000       2.000

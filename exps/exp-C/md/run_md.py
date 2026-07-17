@@ -55,6 +55,12 @@ def run(system_name, replica=1, restart=None, nsteps=50_000_000, gpu="0"):
                                  constraints=app.HBonds, rigidWater=True)
     system = add_restraints(system, amber)
 
+    # Barostat MUST be added before Simulation() creates the Context:
+    # forces added to a System after its Context exists do not take effect
+    # (claude-Jun06 review §3.2). Added unconditionally so restarts also
+    # keep NPT (previously restarts silently ran without a barostat).
+    system.addForce(mm.MonteCarloBarostat(1*unit.bar, 310*unit.kelvin))
+
     print("Creating CUDA context...", flush=True)
     integrator = mm.LangevinIntegrator(310*unit.kelvin, 1.0/unit.picoseconds, 2.0*unit.femtoseconds)
     integrator.setRandomNumberSeed(replica * 42)
@@ -73,9 +79,6 @@ def run(system_name, replica=1, restart=None, nsteps=50_000_000, gpu="0"):
         with open(restart, 'rb') as f:
             simulation.context.loadCheckpoint(f.read())
     else:
-        # Add barostat BEFORE Simulation context creation
-        system.addForce(mm.MonteCarloBarostat(1*unit.bar, 310*unit.kelvin))
-
         simulation.context.setPositions(amber.positions)
         print("Minimizing (10k steps)...")
         simulation.minimizeEnergy(maxIterations=10000)
