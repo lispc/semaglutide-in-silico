@@ -1,0 +1,5 @@
+parm ../../../md/aib8/aib8_modified.prmtop
+trajin ../../../md/aib8/aib8_traj.dcd 1000 2003 5
+autoimage
+strip :WAT,Na+,Cl-
+trajout aib8_dry_last100ns.nc netcdf nobox

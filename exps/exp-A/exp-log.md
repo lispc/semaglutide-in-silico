@@ -153,7 +153,35 @@ Kimi 对项目做了全面 review，要点：
 - **影响**：仅影响时间相关分析（自相关时间单位、扩散系数）。几何分析（RMSD、距离）不受影响
 - **修复**：`full_analysis.py` 和 `compare_linkers.py` 中 dt 从 reporter 间隔硬编码（0.1 ns），不再从 DCD 时间戳推导
 
+## 2026-07-19 — MM-PBSA/GBSA 结合自由能（WT vs Aib8，最后 100 ns）
+
+roadmap 长期挂账的 MM-PBSA 终于落地。方法与全部文件见 `analysis/mmpbsa/RESULTS.md`。
+
+**流程**：cpptraj 取帧 1000–2000 步长 5（201 帧）→ `autoimage` + strip 水/离子 → ante-MMPBSA 干拓扑（mbondi2，受体 :1-728 / 配体肽 :729-759）→ MMPBSA.py 14.0 MPI 16 ranks/体系，GB(igb=5, saltcon=0.1) + PB(默认 inp=2, istrng=0.1) + idecomp=1 分解，单轨迹协议，**未含熵**。
+
+**结果**（kcal/mol，n=201）：
+
+| 量 | GB | PB |
+|---|---:|---:|
+| ΔG WT | +357.91 ± 17.38 | +522.33 ± 25.72 |
+| ΔG Aib8 | +350.44 ± 19.27 | +496.52 ± 22.79 |
+| **ΔΔG (Aib8−WT)** | **−7.48** (SEM 2.29, p=0.001) | **−25.81** (SEM 4.99, p<0.001) |
+| ΔΔG（clash 修正） | −4.85 | −23.18 |
+
+**方向与预期相反**（预期 ≥+5）：Aib8 表观结合能更负。两个决定性警告：
+1. **起始对接 pose 自带 Lys696–Phe28 clash**（重原子 2.27 Å，贯穿 200 ns，+487 kcal/mol vdW）——绝对 ΔG 为巨大正值、无物理意义；所幸两体系 clash 几乎完全相同（Δ=−2.6），ΔΔG 受影响有限
+2. ΔΔG 由带电残基静电重排主导（ΔEEL=−91.8 被极性溶剂化 +89/+72 大部抵消），是 MM-PBSA 最不可靠的分量
+
+**与几何结论的调和**：Aib8 的 N 端被挤出 S1 催化几何（催化距离 5.25 vs 3.70 Å）后在非生产性位姿获得静电补偿（Ser630 静电 −14.5 vs −2.3）。**能量有利 ≠ 催化位姿可行**——DPP-4 抗性的机制是"进不了催化位姿"而非"全局亲和力低"。假说相关的局部信号方向正确：P2 位残基本身 Aib8 不利 +3.1 (GB) / +3.4 (PB) kcal/mol（Aib 极性去溶剂化惩罚 +11.6 vs +5.3）。
+
+**其他发现/勘误**：
+- 文档预警的 cpptraj 盒子不匹配未复现（prmtop/DCD 均为 Orthorhombic）
+- 复核催化距离：现行 `full_analysis.py` 选择作用于原始 DCD 得 3.71 Å（WT），与本分析干轨迹一致；2026-05-27 条目所记 5.0/6.0 Å 按当前脚本不可复现
+- `launch.log` 显示肽 N 端 backbone 约束实际匹配 0 原子（选择 `chain.id=='P'` 未命中），生产中肽未被直接约束——与 2026-05-26 条目的设计描述不符，几何上肽仍停留在活性位点附近
+- ante-MMPBSA.py 不允许同时给受体+配体 mask（报 "Cannot specify both"），只给 `-n` 配体 mask 即可
+- 计算全部在 CPU（32 ranks），未触碰 GPU 1/2/3 上的 exp-C/exp-D 进程；mpi4py 装在项目内 `analysis/mmpbsa/vendor/`，未改动 conda env
+
 ---
 
 *维护者：Claude Code*
-*最后更新：2026-06-06*
+*最后更新：2026-07-19*

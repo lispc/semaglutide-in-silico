@@ -1,0 +1,16 @@
+MM-GBSA (igb=5) + MM-PBSA + per-residue decomposition, 201 frames (last 100 ns)
+Single-trajectory protocol; entropy (nmode) intentionally omitted — relative comparison only
+&general
+  startframe=1, endframe=201, interval=1,
+  verbose=1, keep_files=0,
+/
+&gb
+  igb=5, saltcon=0.100,
+/
+&pb
+  istrng=0.100, radiopt=0, prbrad=1.4,
+/
+&decomp
+  idecomp=1, dec_verbose=1,
+  print_res="509,591-593,670,702,729-759"
+/

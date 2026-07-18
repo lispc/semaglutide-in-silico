@@ -109,7 +109,7 @@ Last major update: 2026-07-17
 | Item | Status | Notes |
 |------|--------|-------|
 | Phase 0 infrastructure | ✅ Complete | ff14SB + GAFF2 + TIP3P pipeline; Aib parameterization; GROMACS/OpenMM cross-checks |
-| exp-A (DPP-4) | ✅ Complete (1 replica) | Aib8 double-methyl consistently pushes the peptide away from the DPP-4 active site; formal criterion (WT ≤3.5 Å) not met — conclusions are relative, MM-PBSA not yet computed |
+| exp-A (DPP-4) | ✅ Complete (1 replica) | Aib8 double-methyl consistently pushes the peptide away from the DPP-4 active site; formal criterion (WT ≤3.5 Å) not met — conclusions are relative. MM-PBSA done (2026-07-19): global ΔΔG opposite to expected sign (artifact-dominated, recorded as a negative result); P2-site decomposition supports the local desolvation penalty (+3.1/+3.4 kcal/mol) |
 | exp-C (HSA acyl chain) | ✅ Complete (reduced sampling) | Free fatty acid anchors at Arg482; attached linker causes the acyl tail to escape into water — hydrophilic OEG is the dominant driver |
 | exp-D (linker) | ⚠️ Preliminary | 4 linker variants × ~100 ns × 3 replicas (γGlu excluded after NaN); qualitative geometric trend matches Lau Table 3, but differences are within error bars and MM-GBSA is not yet available |
 | exp-F membrane system | ✅ Complete (1 replica) | GROMACS 200 ns + OpenMM 224 ns cross-validation; membrane stabilizes the receptor (protein CA RMSD 8.7 / 4.7 Å per engine vs ~32 Å without membrane); acyl tail stays in water (40.6–42.6 Å from membrane center, zero lipid contacts) |
@@ -147,7 +147,7 @@ Production protocols:
 
 ## Key Findings So Far
 
-1. **Aib8 steric block (exp-A)** — The Aib8 double-methyl increases the catalytic Ser630→peptide carbonyl distance by ~1.0 Å, reduces S1-pocket contacts by ~49, and increases the side-chain distance to Trp629 by ~1.7 Å, collectively disfavoring DPP-4 binding.
+1. **Aib8 steric block (exp-A)** — The Aib8 double-methyl pushes the peptide away from the DPP-4 active site on every geometric metric (original run: catalytic distance +1.0 Å, S1-pocket contacts −49, CB→Trp629 +1.7 Å; 2026-07 re-run reproduces the direction: catalytic distance 3.70 vs 5.25 Å WT/Aib8). MM-PBSA on the re-run (2026-07-19) does **not** show globally weaker binding — the global ΔΔG is artifact-dominated and recorded as a negative result: DPP-4 resistance is interpreted as catalytic-pose exclusion, not global affinity loss. The P2-site decomposition is unfavorable for Aib8 (+3.1/+3.4 kcal/mol), as hypothesized.
 
 2. **HSA acyl-chain behavior (exp-C)** — A free C18 di-acid strongly anchors HSA FA3 near Arg482 (~2.8 Å). Once the linker is attached, the fatty-acid tail escapes 32–41 Å from the protein. The escape is driven mainly by the hydrophilic OEG units rather than terminal charge, implying that linker design controls both albumin anchoring and receptor accessibility.
 
@@ -165,7 +165,7 @@ The project is intentionally transparent about what has **not** yet been demonst
 
 - **No single system contains peptide + linker + C18 di-acid + receptor + HSA simultaneously.** exp-C lacks receptor; exp-D lacks HSA; exp-F lacks HSA. The central competition between albumin anchoring and receptor binding is therefore observed only partially.
 - **Sampling is below the original roadmap target** for exp-C and exp-D (100 ns achieved vs 300–500 ns planned). Slow degrees of freedom may not be converged; conclusions are labelled preliminary.
-- **MM-GBSA binding free energies have not yet been computed** for exp-A/C/D, despite being a core quantitative target in the roadmap.
+- **MM-GBSA binding free energies have not yet been computed** for exp-C/D. (exp-A MM-PBSA was computed 2026-07-19: global ΔΔG came out opposite to the expected sign, dominated by a docking-pose clash and electrostatics rearrangement — recorded as a negative result; see `exps/exp-A/analysis/mmpbsa/RESULTS.md`.)
 - **Ensemble inconsistency**: exp-A used NVT production; exp-C/D used NPT production. Cross-experiment energy comparisons must account for ~2% density differences.
 - **Statistical pipeline is still being wired in**: early analyses reported mean±std without autocorrelation correction; this is being retrofitted via `common/lib/stats.py`.
 
