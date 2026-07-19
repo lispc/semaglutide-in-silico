@@ -295,3 +295,44 @@ NZ-C 键修复验证成功：
 
 ---
 *维护者：Kimi Code*
+
+## 2026-07-19 — GPU 1 被外部进程抢占，rep3 迁移至 GPU 0
+
+- 巡检发现 gglu_3oeg rep2 速度从 ~305 ns/d 跌至 ~90 ns/d：GPU 1 上存在**其他用户的进程**（PID 4067962，占 18.8 GB 显存），与本任务共享 GPU。
+- 处置：杀掉 GPU 1 队列子壳（PID 2458216，rep2 进程不受影响继续跑），gglu_3oeg rep3 改为手动启动在空闲的 GPU 0（`CUDA_VISIBLE_DEVICES=0 ... --replica 3 --gpu 0`）。
+- 结果：rep3 全速 392 ns/d；rep2 在共享 GPU 1 上 ~90 ns/d 继续。无 NaN。
+- 教训：共享机器上 GPU 空闲状态可能随时变化；队列脚本未考虑外部抢占，必要时手动迁移。
+
+---
+
+## 2026-07-19 — 最终统计分析：correlated t-test 首次落地（compare_linkers_v2.py）
+
+### 方法
+12 replica（4 变体 × 3）全部跑完（各 1003 帧 × 100 ps = 100 ns，dt 从 DCDReporter 间隔推导）。新脚本 `analysis/compare_linkers_v2.py`：
+- 指标沿用 v1 定义：CA RMSD（ECD CA，resSeq 0–100，对齐 ECD frame 0）、Tail-Prot（LNK 尾部 C[2:] 到蛋白 CA 最小距离）；末 50 ns 为平衡段。
+- Frame-0 验证：12/12 replica NZ(Lys26)–C11 = 1.34–1.43 Å ✓，无拓扑/轨迹错配。
+- 统计：`common/lib/stats.py::correlated_t_test`（**全项目首次真实调用**）作用于拼接逐帧序列（replica 独立，配对任意性已在 RESULTS.md 注明）；对照为 per-replica mean 的 Welch t（n=3，低功效）。
+
+### 结果（平衡段，mean±SD 为 replica mean 间）
+
+| Variant | EC50 (pM) | Tail-Prot (Å) | n_eff | CA RMSD (Å) |
+|---|---:|---:|---:|---:|
+| no_linker | 269 | 5.04±0.26 | 48 | 1.77±0.02 |
+| gglu_1oeg | 4.8 | 3.74±0.14 | 45 | 1.71±0.04 |
+| gglu_2oeg | 6.2 | 3.95±0.07 | 508 | 1.68±0.24 |
+| gglu_3oeg | 27.7 | 3.65±0.12 | 97 | 1.82±0.14 |
+
+主要检验（2×OEG vs X，Tail-Prot，correlated t）：vs no_linker Δ=−1.09 Å，p=1.3×10⁻⁵；vs 1×OEG Δ=+0.21 Å，p=0.015；vs 3×OEG Δ=+0.30 Å，p=0.004。次要（3×OEG vs X，CA RMSD）：全部 p>0.14，无显著差异。
+
+### 结论
+- 2×OEG 与每个变体都统计可区分（p≤0.015），但**唯一大效应是"有 linker vs 无 linker"（−1.1 Å）**；linker 长度之间的差异只有 0.2–0.3 Å，且方向与历史初步结果相反（2×OEG 并非最紧凑）。
+- 历史初步结论（2×OEG 3.8 Å 独特紧凑、3×OEG CA RMSD 最高）**均未被新数据复现**。
+- Tail-Prot 距离排序（3×<1×<2×≪无）与 Lau 2015 Table 3 活性排序（1×≈2×>3×≫无）不一致——"尾部贴近=活性高"不能解释 1×/2×/3×OEG 之间的活性差；只有 no_linker 极端定性吻合。
+- 产物：`analysis/RESULTS.md`、`tail_prot_compare.png`、`per_frame_series.npz`、`test_results.json`、日志 `compare_linkers_v2.log`。
+
+### 教训
+- correlated t-test 的 n_eff 修正至关重要：2×OEG Tail-Prot n_eff=508（尾部弛豫快），CA RMSD 低 n_eff（6–101）使小差异不可检——直接 mean±std 会严重高估精度。
+- v1 脚本 `resname LNK and name C` 在新拓扑下匹配为空（新原子名 C11），frame-0 NZ-C 检查再次证明是必需的回归防线。
+
+---
+*维护者：Kimi Code*
