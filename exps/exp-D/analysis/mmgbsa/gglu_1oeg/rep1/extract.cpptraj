@@ -1,0 +1,5 @@
+parm ../../../../tleap/gglu_1oeg.prmtop
+trajin ../../../../md/gglu_1oeg/rep1/gglu_1oeg_traj.dcd 502 1003 4
+autoimage
+strip :WAT,Na+,Cl-
+trajout gglu_1oeg_rep1_dry.nc netcdf nobox

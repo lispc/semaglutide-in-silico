@@ -233,3 +233,4 @@ exps/exp-F/minimal_model/build_ecd_v2_test*.in
 exps/exp-F/minimal_model/build_ecd_v2_test*.log
 exps/exp-F/minimal_model/check_charge*
 exps/exp-F/minimal_model/md/
+reference.frc

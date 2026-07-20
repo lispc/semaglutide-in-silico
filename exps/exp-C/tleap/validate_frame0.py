@@ -11,9 +11,20 @@ Checks (per exps/exp-C/exp-log.md hard-won lessons):
 Writes a report to frame0_validation.txt
 """
 import numpy as np
+import os
+import sys
 import parmed as pmd
 
+# Systems given as name:fa_atoms on the command line; default = C18 controls.
 EXPECT = {'c18_monoacid': 58, 'c18_diacid': 60}
+OUT = 'frame0_validation.txt'
+if len(sys.argv) > 1:
+    EXPECT = {}
+    for a in sys.argv[1:]:
+        n, c = a.rsplit(':', 1)
+        EXPECT[n] = int(c)
+    OUT = 'frame0_validation_chains.txt'
+OUT = os.environ.get('VALIDATE_OUT', OUT)
 out = []
 
 def rep(s=''):
@@ -98,6 +109,6 @@ for name, n_fa_expect in EXPECT.items():
     rep(f"min FA-heavy..HSA-heavy distance: {dmat.min():.2f} A (clash if < 1.5)")
     rep()
 
-with open('frame0_validation.txt', 'w') as f:
+with open(OUT, 'w') as f:
     f.write("\n".join(out) + "\n")
-print("saved frame0_validation.txt")
+print(f"saved {OUT}")

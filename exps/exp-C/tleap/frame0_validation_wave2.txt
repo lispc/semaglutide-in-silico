@@ -1,0 +1,41 @@
+================================================================
+c18true_diacid
+================================================================
+total atoms: 86422
+FAH atoms: 54 (expect 54) -> OK
+FAH charge: -2.000
+FAH isolated atoms: none
+  C1D valence: 3 (['C01', 'O1D', 'O2D']) -> OK
+  C1P valence: 3 (['C16', 'O1P', 'O2P']) -> OK
+FAH H not bonded to C: none
+FAH connected component size: 54 / 54 -> OK
+HSA residues: 582 (expect 582), CA count: 582
+waters: 25722, Na+: 16, Cl-: 0
+net charge: -0.0000
+box: 114.5 x 77.9 x 116.5 A
+  O1D -> nearest ARG guanidinium N: ARG483(NE) 2.78, ARG346(NH2) 2.82, ARG483(NH2) 3.01
+  O2D -> nearest ARG guanidinium N: ARG346(NH2) 3.52, ARG346(NH1) 3.57, ARG483(NH2) 4.38
+  distal carboxyl anchor (best O..N): 2.78 A  [OK]
+  (tleap ARG346 = canonical ARG348, tleap ARG483 = canonical ARG485 = 'ARG482' in old 0-based-renumbered notes)
+min FA-heavy..HSA-heavy distance: 2.53 A (clash if < 1.5)
+
+================================================================
+c16_monoacid
+================================================================
+total atoms: 86419
+FAH atoms: 49 (expect 49) -> OK
+FAH charge: -1.000
+FAH isolated atoms: none
+  C1X valence: 3 (['C01', 'O1D', 'O2D']) -> OK
+FAH H not bonded to C: none
+FAH connected component size: 49 / 49 -> OK
+HSA residues: 582 (expect 582), CA count: 582
+waters: 25723, Na+: 15, Cl-: 0
+net charge: -0.0000
+box: 114.5 x 77.9 x 116.5 A
+  O1D -> nearest ARG guanidinium N: ARG483(NE) 2.78, ARG346(NH2) 2.82, ARG483(NH2) 3.01
+  O2D -> nearest ARG guanidinium N: ARG346(NH2) 3.52, ARG346(NH1) 3.57, ARG483(NH2) 4.38
+  distal carboxyl anchor (best O..N): 2.78 A  [OK]
+  (tleap ARG346 = canonical ARG348, tleap ARG483 = canonical ARG485 = 'ARG482' in old 0-based-renumbered notes)
+min FA-heavy..HSA-heavy distance: 2.53 A (clash if < 1.5)
+

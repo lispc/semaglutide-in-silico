@@ -275,8 +275,8 @@ Aib8,Arg34-GLP-1(Lys26-脂链)
 |------|:---:|---------|
 | **exp-A** | ✓ 完成（1 replica） | Aib8 双甲基在所有 5 个指标上一致推离 DPP-4 活性位点（催化距离 +1.0 Å, S1 CB→W629 +1.7 Å, 接触数 -49）。注意：形式判据 WT≤3.5 Å 未达成（实测 5.0 Å），MM-PBSA 未算 |
 | Phase 0 基础设施 | ✓ 完成 | ff14SB + GAFF2 + TIP3P 管线, Aib 参数化, GROMACS nstlist=40 修复 |
-| **exp-C** | ✓ 完成（含 MM-GBSA） | 9条100ns完成。游离FA远端羧基双盐桥锚定ARG346+ARG483(2.72-2.75Å，与Liu 2025一致)；MM-GBSA(2026-07-20)：二酸显著优于单酸（ΔΔG=-10.8±2.6 GB/-18.5±4.8 PB kcal/mol, p≈0.03），机制为近端羧基与ARG408的第二盐桥。linker接上后FA逃逸(32-41Å)——OEG亲水性是主因 |
-| **exp-D** | ✓ 完成（含统计检验） | 4 变体 × 100 ns × 3 replica（2026-07-17 重建拓扑后重跑，12/12 通过 frame-0 校验）。correlated t-test：有/无 linker 效应显著（−1.1 Å, p≈10⁻⁵）；OEG 长度间差异 0.2–0.3 Å 且排序与 Lau 活性序不符，旧初步结论未复现。机制解读指向 BR ratio（HSA 端）。详见 `exps/exp-D/analysis/RESULTS.md` |
+| **exp-C** | ✓ 完成（含 MM-GBSA） | 9条100ns完成。游离FA远端羧基双盐桥锚定ARG346+ARG483(2.72-2.75Å，与Liu 2025一致)；MM-GBSA(2026-07-20)：二酸显著优于单酸（ΔΔG=-10.8±2.6 GB/-18.5±4.8 PB kcal/mol, p≈0.03），机制为近端羧基与ARG408的第二盐桥。linker接上后FA逃逸(32-41Å)——OEG亲水性是主因。⚠️命名勘误：本轮"C18"对照实为C19单酸/C20二酸（原脚本按CH₂数命名），结论不受影响；真C18/C16补跑中 |
+| **exp-D** | ✓ 完成（统计检验 + MM-GBSA） | 4 变体 × 100 ns × 3 replica（2026-07-17 重建拓扑后重跑，12/12 通过 frame-0 校验）。correlated t-test：有/无 linker 效应显著（−1.1 Å, p≈10⁻⁵）；OEG 长度间差异 0.2–0.3 Å 且排序与 Lau 活性序不符，旧初步结论未复现。MM-GBSA(2026-07-20) 同结论：仅"有/无 linker"信号稳健，长度排序与活性不符。机制解读指向 BR ratio（HSA 端）。详见 `exps/exp-D/analysis/RESULTS.md` 与 `analysis/mmgbsa/RESULTS.md` |
 | **exp-F 膜体系** | ✓ 完成（1 replica） | GROMACS 200 ns + OpenMM 224 ns 交叉验证完成。膜稳定受体（蛋白 CA RMSD 8.7/4.7 Å vs 无膜 ~32 Å）；LNK 尾部距膜中心 40.6–42.6 Å、零脂质接触——脂链不插膜 |
 | **exp-F ECD v2** | ✓ 完成（1 replica） | 最小功能模型 99.3 ns 完成。内部 RMSD 稳定（ECD 1.4 Å、肽 2.7 Å、Lys-LNK 键 1.39 Å），但 HSA 与脂链从未接近（COM ~109 Å）——HSA-受体竞争未观测到 |
 | **ECD v2 构建** | ✓ 完成 | HSA N-domain + 肽 + ECD + Linker (~145k atoms)。关键修复：跳过 H 原子避免 NGLY 模板冲突、tleap 显式 bond Lys26-LNK |

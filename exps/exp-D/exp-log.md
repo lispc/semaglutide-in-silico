@@ -334,5 +334,29 @@ NZ-C 键修复验证成功：
 - correlated t-test 的 n_eff 修正至关重要：2×OEG Tail-Prot n_eff=508（尾部弛豫快），CA RMSD 低 n_eff（6–101）使小差异不可检——直接 mean±std 会严重高估精度。
 - v1 脚本 `resname LNK and name C` 在新拓扑下匹配为空（新原子名 C11），frame-0 NZ-C 检查再次证明是必需的回归防线。
 
+## 2026-07-20 — MM-GBSA/PBSA：4 变体 × 3 replica @ ECD（`analysis/mmgbsa/`）
+
+roadmap 最后一项 MM-GBSA 缺口。沿用 exp-A/C 管线（cpptraj strip → ante-MMPBSA → MMPBSA.py MPI 10 ranks/case，GB igb=5 + PB inp=2 默认，126 帧/replica = 最后 50 ns，单轨迹，无熵、无 decomp）。
+
+- **mask 勘误**：任务书配体 mask :101-129 有误——实际肽 = 101–126（26 残基）、LNK = 127、128 起为 Na⁺；已用 `:101-127`（NZ-C11 共价键 4/4 变体 frame-0 校验 1.35–1.39 Å 通过）
+- 12 case 两批跑完（每 case ~5 min，2.1k 原子），全部 exit 0
+
+**ΔG（3-rep mean±SD, kcal/mol）与活性**：
+
+| 变体 | ΔG_GB | ΔG_PB | EC50 (pM) |
+|---|---:|---:|---:|
+| no_linker | −39.28 ± 2.94 | +2.67 ± 4.87 | 269 |
+| gglu_1oeg | −60.35 ± 7.01 | −5.77 ± 4.08 | 4.8 |
+| gglu_2oeg | −47.65 ± 7.65 | +1.52 ± 1.12 | 6.2 |
+| gglu_3oeg | −64.44 ± 2.64 | −0.71 ± 0.89 | 27.7 |
+
+- vs no_linker（Welch t）：1oeg −21.1（p=0.022）、3oeg −25.2（p=0.0004）显著；2oeg −8.4（p=0.19）；PB 均不显著
+- Spearman(ΔG, log₁₀EC50)：GB R=+0.40（n=4, p=0.60）；PB R=+0.80（n=4, p=0.20）；all-replica PB R=+0.58（n=12, p=0.047，但 replica 非独立生物重复，显著性虚高）
+
+**结论**：粗粒度信号成立（有 linker > 无 linker，对应 no_linker 活性最差），精细排序不成立（GB 结合序 3×>1×>2× vs 活性序 1×≈2×>3×）——与 Tail-Prot 几何分析结论一致：ECD 层面的能量/几何指标都解释不了 linker 长度活性差，活性差应来自 TMD/PK 等下游因素。组分成因：2×OEG EEL(−140.5) 与 EGB(+171.6) 几乎完全对冲，净结合反而最弱（linker 变体中）。
+
+- 统计警告：n=4 Spearman 检验力极低；副本间涨落大（1oeg GB SD=7.0），<5 kcal/mol 的差异不可判；未含熵，仅供相对比较
+- 全程 CPU（每批 ≤60 ranks），未影响其他任务；原始 FINAL_*.dat/.csv、输入、干轨迹均在 `analysis/mmgbsa/`
+
 ---
 *维护者：Kimi Code*

@@ -293,3 +293,73 @@ exp-C 结论：linker 接上后 FA 逃逸 HSA FA3（无论末端电荷）。转 
 ---
 *维护者：Kimi Code*
 *最后更新：2026-07-20*
+
+## 2026-07-20 — 链长系列构建与 MD 队列（U 形曲线验证）
+
+### 对照轨迹确认
+
+- c18_monoacid / c18_diacid ×3 replica ×100 ns 全部完成（7-19~7-20，GPU 2/3，exit 0，无 NaN；末帧 T≈310 K，PE≈−1.09×10⁶ kJ/mol，密度≈1.012）
+
+### ⚠ 链长编号考据（重要，影响 U 形曲线横轴）
+
+- 任务定义（化学正确）：Cn 二酸 = HOOC-(CH2)_{n-2}-COOH，C18 二酸 = 16 CH2（octadecanedioate, 54 atoms）
+- **原 "c18" 对照实际为 18 CH2**：c18_diacid = 二十烷二酸（eicosanedioate，总碳 20，60 atoms）；c18_monoacid = 十九烷酸（nonadecanoate，总碳 19，58 atoms）。源自 2026-05-27 原构建脚本以"链碳数"而非"总碳数"命名
+- 新系列按总碳数构建。c20_diacid（18 CH2, 60 atoms）与现有 c18_diacid 对照为**同一分子**（同协议，其 3 rep 轨迹可直接作为该链长数据点；本次 c20 ×3 rep 为同分子的额外 replica）
+- **真正 C18 二酸（16 CH2, 54 atoms）尚无轨迹**——U 形曲线中心点缺失。补救：`python build_fa_fa3.py diacid 18 --force`（会覆盖 c18_diacid 相关文件，需先备份对照）或改名构建后补跑 3 rep
+- 单酸/二酸对照的相对比较不受影响：两者链长相等（均 18 链碳），"二酸 vs 单酸"分离的正是额外羧基的效应
+
+### 构建（build_fa_fa3.py v4 泛化：`diacid L [L ...]`，L=总碳数）
+
+| 体系 | CH2 数 | FAH 原子 | 总原子 | Na+ | 净电荷 | O1D→ARG483(NE) | O1D→ARG346(NH2) |
+|------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| c12_diacid | 10 | 36 | 86,404 | 16 | 0.0000 | 2.78 Å | 2.82 Å |
+| c14_diacid | 12 | 42 | 86,410 | 16 | 0.0000 | 2.78 Å | 2.82 Å |
+| c16_diacid | 14 | 48 | 86,416 | 16 | 0.0000 | 2.78 Å | 2.82 Å |
+| c20_diacid | 18 | 60 | 86,428 | 16 | 0.0000 | 2.78 Å | 2.82 Å |
+| c22_diacid | 20 | 66 | 86,434 | 16 | 0.0000 | 2.78 Å | 2.82 Å |
+
+- 全部 tleap Errors=0；FAH 全连通无孤立原子；电荷精确 −2.000；远端羧基全部置于 MYR 1003 晶体位姿（O1D/O2D 与晶体 O 偏差 0.03/0.02 Å）；短链尾部自然埋于口袋浅处，未人为拉伸/折叠
+- 验证记录：`tleap/frame0_validation_chains.txt`
+
+### MD 队列（launch_queue_chains.sh，19:34 启动）
+
+- GPU 0：c12 r1-3, c14 r1-2；GPU 1：c14 r3, c16 r1-3, c20 r1；GPU 2：c20 r2-3, c22 r1-3（各 5 任务串行，100 ns/个）；GPU 3 保留
+- 启动 3 min 检查：首任务（c12r1/c14r3/c20r2）均通过 minimization（PE≈−1.345~−1.350×10⁶，与对照 −1.349×10⁶ 一致）进入 NPT 平衡，T≈310 K，PE≈−1.09×10⁶，密度≈1.01，~187 ns/d（每任务 ~13 h），无 NaN
+- 预计 15 任务全部完成：~2.8 天后（2026-07-23 傍晚）
+
+---
+*维护者：Kimi Code*
+*最后更新：2026-07-20*
+
+## 2026-07-20(晚) — 补缺：c18true_diacid（真 C18 二酸）+ c16_monoacid（真 C16 单酸）
+
+### 命名决策（确认前一条目的编号 bug）
+
+- 现有 `c18_diacid`=C20（18×c3, 60 atoms）、`c18_monoacid`=C19（58 atoms），**文件一律不动**（MM-GBSA 分析已引用其 prmtop，覆盖会破坏可复现性）
+- 新体系独立命名：`c18true_diacid`（HOOC-(CH2)16-COOH，真 C18 二酸 = 司美格鲁肽脂链）、`c16_monoacid`（CH3-(CH2)14-COOH，真 C16 单酸 = 利拉鲁肽链）
+- 构建：`build_fa_fa3.py diacid 18 --label c18true_diacid`（脚本新增 --label，单体系时可用）；`build_fa_fa3.py mono 16`
+
+### 拓扑与 frame-0 验证（tleap Errors=0，记录 `tleap/frame0_validation_wave2.txt`）
+
+| 体系 | FAH 原子 | 总原子 | 电荷 | Na+ | O1D→ARG483(NE) | O1D→ARG346(NH2) | 最小化后 PE (CPU 200 步) |
+|------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| c18true_diacid | 54 (22 重+32 H, 16×c3) | 86,422 | −2.000 | 16 | 2.78 Å | 2.82 Å | −1.233×10⁶ kJ/mol |
+| c16_monoacid | 49 (18 重+31 H, 15 链碳) | 86,419 | −1.000 | 15 | 2.78 Å | 2.82 Å | −1.139×10⁶ kJ/mol |
+
+- 两体系远端羧基均在 MYR 1003 晶体位姿（O 偏差 0.03/0.02 Å）、FAH 全连通无孤立原子、净电荷 0.0000、HSA 582 残基、无 clash（min FA-HSA 2.53 Å）
+
+### 队列布局（不动正在运行的 launch_queue_chains.sh）
+
+- **GPU 3**：`md/launch_queue_c18true.sh`（PID 1464359）——先等 exp-G pilot（`pgrep -f "exp-G"` 消失）；启动时 exp-G 无进程、GPU 3 空闲，故 19:56 立即开始 c18true_diacid rep1-3 串行。rep1 3 分钟检查：minimization OK（PE −1.344×10⁶）、NPT 平衡中 T≈307-311 K、PE≈−1.09×10⁶、186 ns/d、无 NaN。日志 `md/queue_c18true.log`
+- **wave-2（GPU 0/1/2）**：`md/launch_queue_wave2.sh`（PID 1464356）——按 worker PID（1446459/1446460/1446461 → GPU0/1/2，映射取自 /proc/*/environ）分别等待 wave-1 对应卡结束后，在该卡跑 c16_monoacid rep1/2/3。等待条件校验 /proc/PID/cmdline 防 PID 复用。当前 3 个等待子进程均在等待态，wave-1 队列（PID 1446454）不受影响。日志 `md/queue_wave2.log`
+- **注意**：若 exp-G 在 c18true 运行期间启动新任务，会与 GPU 3 竞争（exp-G 等待条件为启动时判定）
+
+### 预计完成
+
+- c18true_diacid ×3：~40 h → 2026-07-22 中午
+- wave-1 15 任务：~2026-07-23 午后；c16_monoacid ×3 随后 ~13 h → 2026-07-24 凌晨
+- 至此 U 形曲线数据点（真实总碳数）：C12, C14, C16, C18(=c18true), C20(=旧 c18_diacid + c20_diacid 共 6 rep), C22；单酸对照：C16(=c16_monoacid), C19(=旧 c18_monoacid)
+
+---
+*维护者：Kimi Code*
+*最后更新：2026-07-20*

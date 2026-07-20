@@ -1,0 +1,5 @@
+parm ../../../../tleap/no_linker.prmtop
+trajin ../../../../md/no_linker/rep1/no_linker_traj.dcd 502 1003 4
+autoimage
+strip :WAT,Na+,Cl-
+trajout no_linker_rep1_dry.nc netcdf nobox

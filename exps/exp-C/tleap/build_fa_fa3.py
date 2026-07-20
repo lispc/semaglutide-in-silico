@@ -1,25 +1,37 @@
 #!/usr/bin/env python3
-"""Build all-atom GAFF2 mol2 for free C18 monoacid (stearate, -1) and
-C18 diacid (octadecanedioate, -2), positioned at the HSA FA3 site.
+"""Build all-atom GAFF2 mol2 for free fatty acids positioned at the HSA FA3 site.
+
+Supports arbitrary chain length (v4, 2026-07-20):
+  Usage: python build_fa_fa3.py {mono|diacid|both} L [L ...] [--force]
+    L = TOTAL carbon count (chemical convention):
+      diacid L -> HOOC-(CH2){L-2}-COOH  (e.g. C18 diacid = 16 CH2, 54 atoms)
+      mono   L -> CH3-(CH2){L-2}-COO-   (e.g. C18 stearate = 17 chain C, 56 atoms)
+    Output: c{L}_{monoacid|diacid}_fa3.mol2 ; existing files need --force.
+
+  NOTE (convention flag): the 2026-05-27 "c18" controls were built with 18
+  CHAIN carbons (C01..C18), i.e. mono = nonadecanoate (19 total C, 58 atoms),
+  diacid = eicosanedioate (20 total C, 60 atoms) -- NOT true C18. Reproduce
+  those molecules with:  mono 19  /  diacid 20 .
 
 Placement strategy (v3, 2026-07-17):
   - C1X/C1D (distal carboxyl C) sits exactly on MYR 1003 C1 (1E7G FA3);
     O1D/O2D are built as ideal sp2 carboxyl in the MYR carboxyl plane,
     so they land on the crystal oxygens (~2.8 A salt bridge to ARG348/485).
   - Chain C01..C10 sit on the crystallographic MYR 1003 C2..C11 positions.
-  - C11..C18 (and proximal C1P) extend the chain with a greedy dihedral
+  - C11..Cn (and proximal C1P) extend the chain with a greedy dihedral
     scan per bond (full 360 deg, prefer near-trans) that maximizes the
     minimum distance to HSA heavy atoms -> clash-free curved tail, matching
     the crystal observation that MYR C12+ is disordered (roomy pocket end).
+  - Shorter chains simply END earlier (tail buried shallower) -- the chain
+    is never artificially stretched or folded.
   (The original builders rotated +112 deg about a FIXED axis per bond,
   giving a 68 deg internal angle and a self-coiled chain -- C01/C17
   overlapped at 0.13 A; and a naive straight zigzag clashes with PHE403.)
 
-Atom counts / charges match the original 2026-05-27 build (exp-log):
-  monoacid: 58 atoms (21 heavy + 37 H), total charge -1
-  diacid:   60 atoms (24 heavy + 36 H), total charge -2
-
-Usage: python build_fa_fa3.py {mono|diacid|both}
+Charge scheme (consistent with the 2026-05-27 controls):
+  GAFF2 types c/o/c3/hc, raw c=+0.70 o=-0.80 c3=-0.12 hc=+0.06 uniformly
+  scaled to integer total (-1 mono / -2 diacid), rounded to 4 decimals with
+  the residual absorbed on a mid-chain carbon.
 """
 import os, sys
 import numpy as np
@@ -28,7 +40,6 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PDB = os.path.join(HERE, "..", "structures", "1E7G.pdb")
 HSA_PDB = os.path.join(HERE, "hsa_no_myr.pdb")
 
-N_C = 18
 BOND_CC, BOND_CH, BOND_CO = 1.54, 1.09, 1.26
 ANG_INT = 112 * np.pi / 180          # internal C-C-C angle
 ANG_TURN = np.pi - ANG_INT           # 68 deg between successive bond vectors
@@ -86,9 +97,9 @@ def carboxyl(cname, onames, ccx, u_to_chain, w_hint):
             Atom(onames[1], ccx + d2 * BOND_CO, 'o', -0.80)]
 
 def next_bond_dir(p3, p2, p1, phi):
-    """Direction for bond p1->p_new: 68 deg from unit(p1->p2)... wait:
-    68 deg turn from unit(p2->p1)?? See below -- angle at p2 = 112 deg.
-    phi = rotation about the (p2->p1) axis, 0 = trans (planar zigzag)."""
+    """Direction for the next bond p1->p_new such that the internal angle at
+    p1 is 112 deg (turn 68 deg from unit(p2->p1)); phi rotates the new bond
+    about the (p2->p1) axis, phi=0 = trans (extended planar zigzag)."""
     u_prev2 = unit(p2 - p3)      # bond p3->p2
     u_prev = unit(p1 - p2)       # bond p2->p1
     n = np.cross(u_prev2, u_prev)
@@ -145,8 +156,12 @@ def add_h(hydro, name, cp, v1, v2):
     hydro.append(Atom(f'{name}B', cp + unit(bis - perp_h) * BOND_CH, 'hc', 0.06))
 
 # ---------------- main build ----------------
-def build(kind):
-    """kind: 'mono' -> stearate (-1); 'diacid' -> octadecanedioate (-2)."""
+def build(kind, n_chain, label):
+    """kind: 'mono' (charge -1) or 'diacid' (charge -2).
+    n_chain: number of methylene-chain carbons C01..Cn.
+    label: system label used for the output filename and reports."""
+    if n_chain < 3:
+        raise ValueError(f"n_chain={n_chain} too small")
     heavy, hydro = [], []
 
     # Distal carboxyl exactly on the MYR carboxyl (crystal plane via O1 hint)
@@ -156,17 +171,18 @@ def build(kind):
     heavy += carboxyl('C1X' if kind == 'mono' else 'C1D', ('O1D', 'O2D'),
                       ccx_d, u_to_chain, MYR["O1"] - ccx_d)
 
-    # C01..C10 on crystallographic MYR C2..C11
-    c_pos = [MYR[f"C{i}"] for i in range(2, 12)]
+    # C01..C10 on crystallographic MYR C2..C11 (or fewer for short chains)
+    n_seed = min(n_chain, 10)
+    c_pos = [MYR[f"C{i}"] for i in range(2, 2 + n_seed)]
 
-    # C11..C18 greedy clash-free extension
-    c_pos = extend_chain(list(c_pos), N_C - len(c_pos), heavy[:3], kind)
+    # Remaining chain carbons: greedy clash-free extension
+    c_pos = extend_chain(list(c_pos), n_chain - n_seed, heavy[:3], label)
 
     for i, cp in enumerate(c_pos):
         heavy.append(Atom(f'C{i+1:02d}', cp, 'c3', -0.12))
 
-    # Proximal carboxyl (diacid): clash-aware continuation from C18,
-    # scored over the WHOLE carboxyl group (C1P + O1P + O2P)
+    # Proximal carboxyl (diacid): clash-aware continuation from the last
+    # chain carbon, scored over the WHOLE carboxyl group (C1P + O1P + O2P)
     if kind == 'diacid':
         heavy_arr = np.array([a.pos for a in heavy])
         best = None
@@ -183,12 +199,12 @@ def build(kind):
                 best = (score, dmin, deg, grp)
         _, dmin, deg, grp = best
         heavy += grp
-        print(f"  [{kind}] C1P carboxyl: offset {deg} deg, min dist {dmin:.2f} A")
+        print(f"  [{label}] C1P carboxyl: offset {deg} deg, min dist {dmin:.2f} A")
 
     # Hydrogens
-    for i in range(N_C):
+    for i in range(n_chain):
         cp = c_pos[i]
-        if kind == 'mono' and i == N_C - 1:
+        if kind == 'mono' and i == n_chain - 1:
             # Terminal CH3: proper tetrahedral geometry (H-C-C = 109.5 deg)
             back = unit(c_pos[i-1] - cp)
             p2 = np.cross(back, [0., 0., 1.])
@@ -205,9 +221,9 @@ def build(kind):
         if i == 0:
             v1 = heavy[0].pos - cp          # toward distal carboxyl C
             v2 = c_pos[1] - cp
-        elif i == N_C - 1:                  # diacid only: neighbor is C1P
+        elif i == n_chain - 1:              # diacid only: neighbor is C1P
             v1 = c_pos[i-1] - cp
-            v2 = heavy[21].pos - cp
+            v2 = heavy[3 + n_chain].pos - cp
         else:
             v1 = c_pos[i-1] - cp
             v2 = c_pos[i+1] - cp
@@ -223,28 +239,30 @@ def build(kind):
     for a in all_atoms:
         a.charge = round(a.charge, 4)
     resid = target_q - sum(a.charge for a in all_atoms)
-    mid_c = next(a for a in all_atoms if a.name == 'C09')
+    anchor_name = 'C09' if n_chain >= 9 else f'C{n_chain:02d}'
+    mid_c = next(a for a in all_atoms if a.name == anchor_name)
     mid_c.charge = round(mid_c.charge + resid, 4)
 
     # ---- Bonds ----
     bonds = []
-    # heavy indices (1-based): 1=C1X/C1D, 2=O1D, 3=O2D, 4..21=C01..C18
+    # heavy indices (1-based): 1=C1X/C1D, 2=O1D, 3=O2D, 4..3+n_chain=C01..Cn
     bonds.append((1, 2, 2)); bonds.append((1, 3, 1)); bonds.append((1, 4, 1))
-    for i in range(N_C - 1):
+    for i in range(n_chain - 1):
         bonds.append((4 + i, 5 + i, 1))
     if kind == 'diacid':
-        bonds.append((21, 22, 1)); bonds.append((22, 23, 2)); bonds.append((22, 24, 1))
+        c1p = 4 + n_chain          # 1-based index of C1P
+        bonds.append((c1p - 1, c1p, 1)); bonds.append((c1p, c1p + 1, 2)); bonds.append((c1p, c1p + 2, 1))
     n_heavy = len(heavy)
     for h_idx, a in enumerate(all_atoms[n_heavy:]):
         cnum = int(a.name[1:].rstrip('ABC'))
         bonds.append((4 + cnum - 1, n_heavy + h_idx + 1, 1))
 
     # ---- Write mol2 ----
-    out = os.path.join(HERE, f"c18_{'monoacid' if kind == 'mono' else 'diacid'}_fa3.mol2")
+    out = os.path.join(HERE, f"{label}_fa3.mol2")
     with open(out, 'w') as f:
         f.write("@<TRIPOS>MOLECULE\nFAH\n")
         f.write(f" {len(all_atoms)} {len(bonds)} 1 0 0\nSMALL\nGAFF2\n"
-                f"C18 {'monoacid' if kind == 'mono' else 'diacid'} at FA3 (all-atom)\n\n")
+                f"{label} at FA3 (all-atom)\n\n")
         f.write("@<TRIPOS>ATOM\n")
         for aid, a in enumerate(all_atoms):
             f.write(f"{aid+1:6d} {a.name:6s} {a.pos[0]:10.4f} {a.pos[1]:10.4f} {a.pos[2]:10.4f} "
@@ -256,7 +274,7 @@ def build(kind):
 
     # ---- Report ----
     o1d, o2d = heavy[1].pos, heavy[2].pos
-    print(f"[{kind}] wrote {out}")
+    print(f"[{label}] wrote {out}")
     print(f"  atoms={len(all_atoms)} (heavy={n_heavy}, H={len(hydro)}), bonds={len(bonds)}, "
           f"charge={sum(a.charge for a in all_atoms):+.3f}")
     print(f"  O1D-O2D: {np.linalg.norm(o1d-o2d):.2f} A | "
@@ -277,8 +295,31 @@ def build(kind):
         print(f"  O1P-O2P: {np.linalg.norm(o1p-o2p):.2f} A (carboxyl, ~2.23)")
 
 if __name__ == "__main__":
-    kinds = sys.argv[1:] or ['both']
-    if kinds == ['both']:
-        kinds = ['mono', 'diacid']
-    for k in kinds:
-        build(k)
+    args = sys.argv[1:]
+    if not args or args[0] not in ('mono', 'diacid', 'both'):
+        print(__doc__)
+        sys.exit(1)
+    kind = args[0]
+    force = '--force' in args
+    label_override = None
+    if '--label' in args:
+        i = args.index('--label')
+        if i + 1 >= len(args) or args[i + 1].startswith('-'):
+            sys.exit("--label needs a value")
+        label_override = args[i + 1]
+    lengths = [int(x) for x in args[1:] if x.lstrip('-').isdigit()]
+    if not lengths:
+        print(__doc__)
+        sys.exit(1)
+    kinds = ['mono', 'diacid'] if kind == 'both' else [kind]
+    if label_override and len(lengths) * len(kinds) != 1:
+        sys.exit("--label only valid with exactly one system")
+    for L in lengths:
+        for k in kinds:
+            n_chain = L - 2 if k == 'diacid' else L - 1
+            label = label_override or f"c{L}_{'diacid' if k == 'diacid' else 'monoacid'}"
+            out = os.path.join(HERE, f"{label}_fa3.mol2")
+            if os.path.exists(out) and not force:
+                print(f"SKIP {label}: {out} exists (use --force to overwrite)")
+                continue
+            build(k, n_chain, label)
