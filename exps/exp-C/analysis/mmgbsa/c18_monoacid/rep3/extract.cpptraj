@@ -1,0 +1,5 @@
+parm ../../../../tleap/c18_monoacid.prmtop
+trajin ../../../../md/c18_monoacid/rep3/c18_monoacid_traj.dcd 502 1003 4
+autoimage
+strip :WAT,Na+,Cl-
+trajout c18_monoacid_rep3_dry.nc netcdf nobox

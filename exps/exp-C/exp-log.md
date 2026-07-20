@@ -260,6 +260,36 @@ exp-C 结论：linker 接上后 FA 逃逸 HSA FA3（无论末端电荷）。转 
 - 日志：`md/queue.log` + `md/<system>/rep<i>/md_output.log`
 - GPU 0/1（exp-D 保留）不使用
 
+## 2026-07-20 — 6 replica MD 全部完成 + MM-GBSA/PBSA（单酸 vs 二酸）
+
+### MD 完成
+- **16:38** c18_monoacid rep3 完成（13.2 h）；**16:55** c18_diacid rep3 完成（13.2 h）
+- queue.log："exp-C queue complete: 6 jobs finished"。2 体系 × 3 replica × 100 ns 全部就绪
+
+### MM-GBSA/PBSA（沿用 exp-A 管线，`analysis/mmgbsa/`）
+
+- 流程：cpptraj autoimage+strip（帧 502–1002 步长 4 → 126 帧/replica，即最后 50 ns）→ ante-MMPBSA 干拓扑（`-n ':583'`, mbondi2）→ MMPBSA.py 14.0 MPI 14 ranks/副本，GB(igb=5) + PB(inp=2 默认) + idecomp=1，单轨迹，**未含熵**
+- rep1/rep2 四副本先行（~15:50 启动）；rep3 由 `watch_rep3.sh` 监视 MD 完成后自动抽取+启动（17:35 全部 exit 0）
+
+**结果（3-replica mean±SD, kcal/mol）**：
+
+| 体系 | ΔG_GB | ΔG_PB |
+|---|---:|---:|
+| 单酸 | −78.91 ± 2.17 | −37.15 ± 3.88 |
+| 二酸 | −89.69 ± 4.02 | −55.64 ± 7.35 |
+| **ΔΔG（二酸−单酸）** | **−10.78 ± 2.64** (Welch p=0.025) | **−18.49 ± 4.80** (p=0.030) |
+
+**结论：二酸显著优于单酸，GB/PB 同向且 replica 间一致（3/3），设计逻辑成立。**
+
+机制（分解 + 成对作用能 + 距离三重证据）：
+- 远端羧基双盐桥锚定 ARG346+ARG483（2.72–2.75 Å，全部 6 轨迹稳定；裸静电 单酸 −249.8 / 二酸 −228.4）
+- **二酸近端羧基与 ARG408 形成第二个稳定盐桥**（rep1/2/3 = 3.73/3.04/2.75 Å；裸静电 −97.8；分解 ARG408 贡献 单酸 ≈0 → 二酸 −7.9 GB / −8.5 PB）——这是 ΔΔG 的主要来源
+- vdW 两体系完全相同；ΔΔG 全部来自"第二羧基静电增益（ΔEEL −99.6）− 去溶剂化代价（ΔE_GB +89.8）"的净正余额
+- **勘正历史观察**：旧文档"近端羧基游离、距最近 Arg ~13 Å"在游离脂肪酸 @ FA3 体系不成立（3 replica 均锚定 ARG408）；该描述应只适用于脂肪酸接肽/连接子的构建
+
+- 统计说明：副本内 SEM 经 n_eff 修正（0.6–2.2）；副本间 n=3，Welch t 为最低限度统计；二酸 rep3 最强（盐桥最紧）拉大 SD，幅度不宜当精确值
+- 计算全在 CPU（峰值 ~84 ranks），未触碰 GPU；rep3 MM-GBSA 启动时 rep3 MD 已自然结束
+
 ---
 *维护者：Kimi Code*
-*最后更新：2026-07-17*
+*最后更新：2026-07-20*

@@ -1,0 +1,6 @@
+[watcher] waiting for both rep3 md_output.log to say Done...
+[watcher] Mon Jul 20 04:59:20 PM CST 2026 rep3 MD done; extracting dry trajectories
+[watcher] c18_monoacid rep3 extract: reading 126 of 1003
+[watcher] c18_diacid rep3 extract: reading 126 of 1003
+[watcher] Mon Jul 20 04:59:20 PM CST 2026 launching rep3 MM-GBSA runs
+[watcher] rep3 runs launched
