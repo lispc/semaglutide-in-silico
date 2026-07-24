@@ -1,0 +1,9 @@
+Stripping :WAT,Na+,Cl- (solvent) from original topology, output is com_dry.prmtop
+Done stripping solvent!
+
+Creating receptor topology file by stripping :583 from com_dry.prmtop
+Done creating receptor topology file!
+
+Creating ligand topology file by stripping !(:583) from com_dry.prmtop
+Done creating ligand topology file!
+

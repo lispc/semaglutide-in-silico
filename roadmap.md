@@ -267,7 +267,7 @@ Aib8,Arg34-GLP-1(Lys26-脂链)
 
 ---
 
-## 项目当前进度 (2026-07-17)
+## 项目当前进度 (2026-07-24)
 
 ### 已完成
 
@@ -275,11 +275,17 @@ Aib8,Arg34-GLP-1(Lys26-脂链)
 |------|:---:|---------|
 | **exp-A** | ✓ 完成（1 replica） | Aib8 双甲基在所有 5 个指标上一致推离 DPP-4 活性位点（催化距离 +1.0 Å, S1 CB→W629 +1.7 Å, 接触数 -49）。注意：形式判据 WT≤3.5 Å 未达成（实测 5.0 Å），MM-PBSA 未算 |
 | Phase 0 基础设施 | ✓ 完成 | ff14SB + GAFF2 + TIP3P 管线, Aib 参数化, GROMACS nstlist=40 修复 |
-| **exp-C** | ✓ 完成（含 MM-GBSA） | 9条100ns完成。游离FA远端羧基双盐桥锚定ARG346+ARG483(2.72-2.75Å，与Liu 2025一致)；MM-GBSA(2026-07-20)：二酸显著优于单酸（ΔΔG=-10.8±2.6 GB/-18.5±4.8 PB kcal/mol, p≈0.03），机制为近端羧基与ARG408的第二盐桥。linker接上后FA逃逸(32-41Å)——OEG亲水性是主因。⚠️命名勘误：本轮"C18"对照实为C19单酸/C20二酸（原脚本按CH₂数命名），结论不受影响；真C18/C16补跑中 |
+| **exp-C** | ✓ 完成（含 MM-GBSA + 链长系列） | 9条100ns完成。游离FA远端羧基双盐桥锚定ARG346+ARG483(2.72-2.75Å，与Liu 2025一致)；MM-GBSA(2026-07-20)：二酸显著优于单酸（ΔΔG=-10.8±2.6 GB/-18.5±4.8 PB kcal/mol, p≈0.03），机制为近端羧基与ARG408的第二盐桥。linker接上后FA逃逸(32-41Å)——OEG亲水性是主因。⚠️命名勘误：本轮"C18"对照实为C19单酸/C20二酸（原脚本按CH₂数命名），结论不受影响。**链长系列(2026-07-24)**：真C12/C14/C16/C18/C20/C22二酸×3 rep + C16单酸×3 rep（各100 ns）完成，MM-GBSA U形曲线：C18进入顶部簇（GB −87.4±3.2）但非唯一最优（C22最强−93.2±1.0，差值在方法误差内）；C16二酸为GB/PB一致的局部低点；FAH贡献随链长单调增强（−13.4→−29.6）。详见 `exps/exp-C/analysis/mmgbsa/chain-series/RESULTS-chain-series.md` 与 `U_curve.png`（c18true rep3 的 MM-GBSA 点收尾中） |
 | **exp-D** | ✓ 完成（统计检验 + MM-GBSA） | 4 变体 × 100 ns × 3 replica（2026-07-17 重建拓扑后重跑，12/12 通过 frame-0 校验）。correlated t-test：有/无 linker 效应显著（−1.1 Å, p≈10⁻⁵）；OEG 长度间差异 0.2–0.3 Å 且排序与 Lau 活性序不符，旧初步结论未复现。MM-GBSA(2026-07-20) 同结论：仅"有/无 linker"信号稳健，长度排序与活性不符。机制解读指向 BR ratio（HSA 端）。详见 `exps/exp-D/analysis/RESULTS.md` 与 `analysis/mmgbsa/RESULTS.md` |
 | **exp-F 膜体系** | ✓ 完成（1 replica） | GROMACS 200 ns + OpenMM 224 ns 交叉验证完成。膜稳定受体（蛋白 CA RMSD 8.7/4.7 Å vs 无膜 ~32 Å）；LNK 尾部距膜中心 40.6–42.6 Å、零脂质接触——脂链不插膜 |
 | **exp-F ECD v2** | ✓ 完成（1 replica） | 最小功能模型 99.3 ns 完成。内部 RMSD 稳定（ECD 1.4 Å、肽 2.7 Å、Lys-LNK 键 1.39 Å），但 HSA 与脂链从未接近（COM ~109 Å）——HSA-受体竞争未观测到 |
 | **ECD v2 构建** | ✓ 完成 | HSA N-domain + 肽 + ECD + Linker (~145k atoms)。关键修复：跳过 H 原子避免 NGLY 模板冲突、tleap 显式 bond Lys26-LNK |
+
+### 进行中
+
+| 实验 | 状态 | 详情 |
+|------|:---:|------|
+| **exp-G**（HSA–受体竞争三元体系） | 🔄 2/3 replica 完成 | 首个同时含 HSA+司美格鲁肽+ECD 的体系（141,880 原子，FA3 预锚定）。pilot 20 ns：linker 使 FA3 解锚加速 ~100×（~2 ns 松脱），但尾羧基保持 HSA 表面接触（2.53±0.14 Å）、肽全程锁定 ECD（1.34±0.03 Å）——桥接构型为稳态。production rep1/rep2 各 100 ns 已完成，rep3 运行中；驻留分区分析（FA3口袋/表面/水相）待 3 replica 齐后统一做。详见 `exps/exp-G/README.md` 与 `exp-log.md` |
 
 ### 暂停
 
@@ -297,7 +303,7 @@ exp-E (SAR 复现，前置条件未满足：exp-A 多 replica)；exp-F/exp-A rep
 
 | 边界 | 说明 | 影响 |
 |------|------|------|
-| **无完整司美格鲁肽体系** | exp-C（HSA 端）无受体；exp-D（受体端）无 HSA。exp-F Phase 3 膜体系 production 已跑 16.9 ns，肽+linker+C18 二酸+受体+膜稳定。但无 HSA，未观测脂链-HSA 锚定与受体结合的竞争。项目目前没有任何体系同时包含肽+linker+C18 二酸+受体+HSA | 四步决策链中"脂链 vs 受体的空间竞争"核心矛盾仅在膜体系中部分观测 |
+| **完整司美格鲁肽体系仅 exp-G 一例** | exp-C（HSA 端）无受体；exp-D（受体端）无 HSA。exp-G（2026-07-21 起）首次同时包含肽+linker+C18二酸+受体ECD+HSA（FA3 预锚定，141,880 原子），pilot + 2/3 production replica 已完成，但驻留分区定量分析尚未落地 | 竞争核心矛盾的直接证据目前只有 pilot 单轨迹；待 exp-G 3 replica 分析后更新此边界 |
 | **系综不一致** | exp-A 用 NVT production；exp-C/D 用 NPT production | 跨实验能量比较需在 Methods 中明确交代；密度差异 ~2% 为已知系统误差 |
 | **模拟量未达标** | exp-D 实际 ~100 ns（计划 500 ns）；exp-C 实际 100 ns（计划 300 ns） | 采样不足可能导致慢自由度未收敛；结论必须标注" preliminary / not statistically significant" |
 | **统计管线待升级** | 当前分析仅报 mean±std，未做自相关校正、replica CV、correlated t-test | 0.x Å 差异易被误读为"趋势"；`common/lib/stats.py` 已创建，正在接入各实验分析脚本 |

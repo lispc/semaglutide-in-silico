@@ -1,0 +1,75 @@
+
+CPPTRAJ: Trajectory Analysis. V6.24.0 (AmberTools)
+    ___  ___  ___  ___
+     | \/ | \/ | \/ | 
+    _|_/\_|_/\_|_/\_|_
+
+| Date/time: 07/24/26 06:56:21
+| Available memory: 709.391 GB
+
+INPUT: Reading input from 'extract.cpptraj'
+  [parm ../../../../../tleap/c18true_diacid.prmtop]
+	Reading '../../../../../tleap/c18true_diacid.prmtop' as Amber Topology
+	Radius Set: modified Bondi radii (mbondi)
+  [trajin ../../../../../md/c18true_diacid/rep2/c18true_diacid_traj.dcd 502 1003 4]
+	Reading '../../../../../md/c18true_diacid/rep2/c18true_diacid_traj.dcd' as Charmm DCD
+	Symmetric shape matrix detected.
+  [autoimage]
+    AUTOIMAGE: To box center based on center of mass, anchor is first molecule.
+  [strip :WAT,Na+,Cl-]
+    STRIP: Stripping atoms in mask [:WAT,Na+,Cl-]
+  [trajout c18true_diacid_rep2_dry.nc netcdf nobox]
+	Writing 'c18true_diacid_rep2_dry.nc' as Amber NetCDF
+---------- RUN BEGIN -------------------------------------------------
+
+PARAMETER FILES (1 total):
+ 0: c18true_diacid.prmtop, 86422 atoms, 26321 res, box: Orthorhombic, 25740 mol, 25722 solvent
+
+INPUT TRAJECTORIES (1 total):
+ 0: 'c18true_diacid_traj.dcd' is a CHARMM DCD file (coords) Little Endian 32 bit, Parm c18true_diacid.prmtop (Orthorhombic box) (reading 126 of 1003)
+  Coordinate processing will occur on 126 frames.
+
+OUTPUT TRAJECTORIES (1 total):
+  'c18true_diacid_rep2_dry.nc' (126 frames) is a NetCDF (NetCDF3) AMBER trajectory no box info,
+
+BEGIN TRAJECTORY PROCESSING:
+.....................................................
+ACTION SETUP FOR PARM 'c18true_diacid.prmtop' (2 actions):
+  0: [autoimage]
+	Using first molecule as anchor.
+	1 molecules are fixed to anchor: 2
+	25738 molecules are mobile.
+  1: [strip :WAT,Na+,Cl-]
+	Stripping 77182 atoms.
+	Stripped topology: 9240 atoms, 583 res, box: Orthorhombic, 2 mol
+Warning: Setting NetCDF variable compression requires compiling with HDF5 support.
+Warning: Setting NetCDF variable compression requires compiling with HDF5 support.
+Warning: Setting NetCDF frame chunk size requires compiling with HDF5 support.
+.....................................................
+ACTIVE OUTPUT TRAJECTORIES (1):
+  c18true_diacid_rep2_dry.nc (coordinates, time)
+----- c18true_diacid_traj.dcd (502-1003, 4) -----
+ 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100% Complete.
+
+Read 126 frames and processed 126 frames.
+TIME: Avg. throughput= 715.5676 frames / second.
+
+ACTION OUTPUT:
+TIME: Analyses took 0.0000 seconds.
+
+RUN TIMING:
+TIME:		Init               : 0.0000 s (  0.01%)
+TIME:		Trajectory Process : 0.1761 s ( 99.53%)
+TIME:		Action Post        : 0.0000 s (  0.00%)
+TIME:		Analysis           : 0.0000 s (  0.00%)
+TIME:		Data File Write    : 0.0000 s (  0.00%)
+TIME:		Other              : 0.0008 s (  0.00%)
+TIME:	Run Total 0.1769 s
+---------- RUN END ---------------------------------------------------
+TIME: Total execution time: 0.2551 seconds.
+--------------------------------------------------------------------------------
+To cite CPPTRAJ use:
+Daniel R. Roe and Thomas E. Cheatham, III, "PTRAJ and CPPTRAJ: Software for
+  Processing and Analysis of Molecular Dynamics Trajectory Data". J. Chem.
+  Theory Comput., 2013, 9 (7), pp 3084-3095.
+

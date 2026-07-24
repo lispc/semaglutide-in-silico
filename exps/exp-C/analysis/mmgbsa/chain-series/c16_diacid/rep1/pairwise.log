@@ -1,0 +1,233 @@
+
+CPPTRAJ: Trajectory Analysis. V6.24.0 (AmberTools)
+    ___  ___  ___  ___
+     | \/ | \/ | \/ | 
+    _|_/\_|_/\_|_/\_|_
+
+| Date/time: 07/23/26 16:03:00
+| Available memory: 695.336 GB
+
+INPUT: Reading input from 'pairwise.cpptraj'
+  [parm ../com_dry.prmtop]
+	Reading '../com_dry.prmtop' as Amber Topology
+	Radius Set: H(N)-modified Bondi radii (mbondi2)
+  [trajin c16_diacid_rep1_dry.nc]
+	Reading 'c16_diacid_rep1_dry.nc' as Amber NetCDF
+  [energy e_ab (:583@C1D,O1D,O2D)|(:346,483) out pw_distal_anchor.dat]
+    ENERGY: Calculating energy for atoms in mask '(:583@C1D,O1D,O2D)|(:346,483)'
+	Calculating terms: 'Bonds' 'Angles' 'Dihedrals' '1-4 VDW' '1-4 Elec.' 'VDW' 'Elec.' 'Kinetic' 'Total'
+	Electrostatics method: Simple
+	If forces and velocities present KE will be calculated assuming
+	velocities are a half step ahead of forces; if only velocities
+	present KE will be calculated assuming velocities are on-step.
+	Time step for KE calculation if forces present: 0.001 ps
+  [energy e_a :583@C1D,O1D,O2D out pw_distal_anchor.dat]
+    ENERGY: Calculating energy for atoms in mask ':583@C1D,O1D,O2D'
+	Calculating terms: 'Bonds' 'Angles' 'Dihedrals' '1-4 VDW' '1-4 Elec.' 'VDW' 'Elec.' 'Kinetic' 'Total'
+	Electrostatics method: Simple
+	If forces and velocities present KE will be calculated assuming
+	velocities are a half step ahead of forces; if only velocities
+	present KE will be calculated assuming velocities are on-step.
+	Time step for KE calculation if forces present: 0.001 ps
+  [energy e_b :346,483 out pw_distal_anchor.dat]
+    ENERGY: Calculating energy for atoms in mask ':346,483'
+	Calculating terms: 'Bonds' 'Angles' 'Dihedrals' '1-4 VDW' '1-4 Elec.' 'VDW' 'Elec.' 'Kinetic' 'Total'
+	Electrostatics method: Simple
+	If forces and velocities present KE will be calculated assuming
+	velocities are a half step ahead of forces; if only velocities
+	present KE will be calculated assuming velocities are on-step.
+	Time step for KE calculation if forces present: 0.001 ps
+  [energy p_ab (:583@C1P,O1P,O2P)|(:408) out pw_prox_408.dat]
+    ENERGY: Calculating energy for atoms in mask '(:583@C1P,O1P,O2P)|(:408)'
+	Calculating terms: 'Bonds' 'Angles' 'Dihedrals' '1-4 VDW' '1-4 Elec.' 'VDW' 'Elec.' 'Kinetic' 'Total'
+	Electrostatics method: Simple
+	If forces and velocities present KE will be calculated assuming
+	velocities are a half step ahead of forces; if only velocities
+	present KE will be calculated assuming velocities are on-step.
+	Time step for KE calculation if forces present: 0.001 ps
+  [energy p_a :583@C1P,O1P,O2P out pw_prox_408.dat]
+    ENERGY: Calculating energy for atoms in mask ':583@C1P,O1P,O2P'
+	Calculating terms: 'Bonds' 'Angles' 'Dihedrals' '1-4 VDW' '1-4 Elec.' 'VDW' 'Elec.' 'Kinetic' 'Total'
+	Electrostatics method: Simple
+	If forces and velocities present KE will be calculated assuming
+	velocities are a half step ahead of forces; if only velocities
+	present KE will be calculated assuming velocities are on-step.
+	Time step for KE calculation if forces present: 0.001 ps
+  [energy p_b :408 out pw_prox_408.dat]
+    ENERGY: Calculating energy for atoms in mask ':408'
+	Calculating terms: 'Bonds' 'Angles' 'Dihedrals' '1-4 VDW' '1-4 Elec.' 'VDW' 'Elec.' 'Kinetic' 'Total'
+	Electrostatics method: Simple
+	If forces and velocities present KE will be calculated assuming
+	velocities are a half step ahead of forces; if only velocities
+	present KE will be calculated assuming velocities are on-step.
+	Time step for KE calculation if forces present: 0.001 ps
+---------- RUN BEGIN -------------------------------------------------
+
+PARAMETER FILES (1 total):
+ 0: com_dry.prmtop, 9234 atoms, 583 res, box: None, 2 mol
+
+INPUT TRAJECTORIES (1 total):
+ 0: 'c16_diacid_rep1_dry.nc' is a NetCDF (NetCDF3) AMBER trajectory with coordinates, time, Parm com_dry.prmtop (reading 126 of 126)
+  Coordinate processing will occur on 126 frames.
+
+BEGIN TRAJECTORY PROCESSING:
+.....................................................
+ACTION SETUP FOR PARM 'com_dry.prmtop' (6 actions):
+  0: [energy e_ab (:583@C1D,O1D,O2D)|(:346,483) out pw_distal_anchor.dat]
+	Mask [(:583@C1D,O1D,O2D)|(:346,483)] corresponds to 51 atoms.
+	Memory used by full exclusion list: 0.908 kB
+Warning: Coordinates have no velocities - kinetic energy will be zero.
+  1: [energy e_a :583@C1D,O1D,O2D out pw_distal_anchor.dat]
+	Mask [:583@C1D,O1D,O2D] corresponds to 3 atoms.
+	Memory used by full exclusion list: 0.012 kB
+Warning: Coordinates have no velocities - kinetic energy will be zero.
+  2: [energy e_b :346,483 out pw_distal_anchor.dat]
+	Mask [:346,483] corresponds to 48 atoms.
+	Memory used by full exclusion list: 0.896 kB
+Warning: Coordinates have no velocities - kinetic energy will be zero.
+  3: [energy p_ab (:583@C1P,O1P,O2P)|(:408) out pw_prox_408.dat]
+	Mask [(:583@C1P,O1P,O2P)|(:408)] corresponds to 27 atoms.
+	Memory used by full exclusion list: 0.460 kB
+Warning: Coordinates have no velocities - kinetic energy will be zero.
+  4: [energy p_a :583@C1P,O1P,O2P out pw_prox_408.dat]
+	Mask [:583@C1P,O1P,O2P] corresponds to 3 atoms.
+	Memory used by full exclusion list: 0.012 kB
+Warning: Coordinates have no velocities - kinetic energy will be zero.
+  5: [energy p_b :408 out pw_prox_408.dat]
+	Mask [:408] corresponds to 24 atoms.
+	Memory used by full exclusion list: 0.448 kB
+Warning: Coordinates have no velocities - kinetic energy will be zero.
+----- c16_diacid_rep1_dry.nc (1-126, 1) -----
+ 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100% Complete.
+
+Read 126 frames and processed 126 frames.
+TIME: Avg. throughput= 315.1694 frames / second.
+
+ACTION OUTPUT:
+Timing for energy: 'e_ab' ('(:583@C1D,O1D,O2D)|(:346,483)')
+TIME: Total: 0.0677 s
+TIME:	BOND        : 0.0051 s (  7.56%)
+TIME:	ANGLE       : 0.0115 s ( 17.03%)
+TIME:	TORSION     : 0.0249 s ( 36.82%)
+TIME:	1-4_NONBOND : 0.0230 s ( 33.91%)
+TIME:	NONBOND     : 0.0031 s (  4.54%)
+Timing for energy: 'e_a' (':583@C1D,O1D,O2D')
+TIME: Total: 0.0602 s
+TIME:	BOND        : 0.0051 s (  8.43%)
+TIME:	ANGLE       : 0.0108 s ( 18.01%)
+TIME:	TORSION     : 0.0222 s ( 36.83%)
+TIME:	1-4_NONBOND : 0.0220 s ( 36.54%)
+TIME:	NONBOND     : 0.0000 s (  0.04%)
+Timing for energy: 'e_b' (':346,483')
+TIME: Total: 0.0673 s
+TIME:	BOND        : 0.0052 s (  7.66%)
+TIME:	ANGLE       : 0.0114 s ( 17.00%)
+TIME:	TORSION     : 0.0249 s ( 37.05%)
+TIME:	1-4_NONBOND : 0.0230 s ( 34.14%)
+TIME:	NONBOND     : 0.0027 s (  4.01%)
+Timing for energy: 'p_ab' ('(:583@C1P,O1P,O2P)|(:408)')
+TIME: Total: 0.0633 s
+TIME:	BOND        : 0.0051 s (  8.04%)
+TIME:	ANGLE       : 0.0112 s ( 17.65%)
+TIME:	TORSION     : 0.0235 s ( 37.15%)
+TIME:	1-4_NONBOND : 0.0225 s ( 35.61%)
+TIME:	NONBOND     : 0.0009 s (  1.41%)
+Timing for energy: 'p_a' (':583@C1P,O1P,O2P')
+TIME: Total: 0.0602 s
+TIME:	BOND        : 0.0050 s (  8.39%)
+TIME:	ANGLE       : 0.0108 s ( 17.99%)
+TIME:	TORSION     : 0.0222 s ( 36.88%)
+TIME:	1-4_NONBOND : 0.0220 s ( 36.58%)
+TIME:	NONBOND     : 0.0000 s (  0.03%)
+Timing for energy: 'p_b' (':408')
+TIME: Total: 0.0632 s
+TIME:	BOND        : 0.0051 s (  8.03%)
+TIME:	ANGLE       : 0.0111 s ( 17.61%)
+TIME:	TORSION     : 0.0236 s ( 37.33%)
+TIME:	1-4_NONBOND : 0.0226 s ( 35.77%)
+TIME:	NONBOND     : 0.0007 s (  1.12%)
+TIME: Analyses took 0.0000 seconds.
+
+DATASETS (54 total):
+	e_ab[bond] "e_ab[bond]" (double), size is 126 (1.008 kB)
+	e_ab[angle] "e_ab[angle]" (double), size is 126 (1.008 kB)
+	e_ab[dih] "e_ab[dih]" (double), size is 126 (1.008 kB)
+	e_ab[vdw14] "e_ab[vdw14]" (double), size is 126 (1.008 kB)
+	e_ab[elec14] "e_ab[elec14]" (double), size is 126 (1.008 kB)
+	e_ab[vdw] "e_ab[vdw]" (double), size is 126 (1.008 kB)
+	e_ab[elec] "e_ab[elec]" (double), size is 126 (1.008 kB)
+	e_ab[kinetic] "e_ab[kinetic]" (double), size is 0
+	e_ab[total] "e_ab[total]" (double), size is 126 (1.008 kB)
+	e_a[bond] "e_a[bond]" (double), size is 126 (1.008 kB)
+	e_a[angle] "e_a[angle]" (double), size is 126 (1.008 kB)
+	e_a[dih] "e_a[dih]" (double), size is 126 (1.008 kB)
+	e_a[vdw14] "e_a[vdw14]" (double), size is 126 (1.008 kB)
+	e_a[elec14] "e_a[elec14]" (double), size is 126 (1.008 kB)
+	e_a[vdw] "e_a[vdw]" (double), size is 126 (1.008 kB)
+	e_a[elec] "e_a[elec]" (double), size is 126 (1.008 kB)
+	e_a[kinetic] "e_a[kinetic]" (double), size is 0
+	e_a[total] "e_a[total]" (double), size is 126 (1.008 kB)
+	e_b[bond] "e_b[bond]" (double), size is 126 (1.008 kB)
+	e_b[angle] "e_b[angle]" (double), size is 126 (1.008 kB)
+	e_b[dih] "e_b[dih]" (double), size is 126 (1.008 kB)
+	e_b[vdw14] "e_b[vdw14]" (double), size is 126 (1.008 kB)
+	e_b[elec14] "e_b[elec14]" (double), size is 126 (1.008 kB)
+	e_b[vdw] "e_b[vdw]" (double), size is 126 (1.008 kB)
+	e_b[elec] "e_b[elec]" (double), size is 126 (1.008 kB)
+	e_b[kinetic] "e_b[kinetic]" (double), size is 0
+	e_b[total] "e_b[total]" (double), size is 126 (1.008 kB)
+	p_ab[bond] "p_ab[bond]" (double), size is 126 (1.008 kB)
+	p_ab[angle] "p_ab[angle]" (double), size is 126 (1.008 kB)
+	p_ab[dih] "p_ab[dih]" (double), size is 126 (1.008 kB)
+	p_ab[vdw14] "p_ab[vdw14]" (double), size is 126 (1.008 kB)
+	p_ab[elec14] "p_ab[elec14]" (double), size is 126 (1.008 kB)
+	p_ab[vdw] "p_ab[vdw]" (double), size is 126 (1.008 kB)
+	p_ab[elec] "p_ab[elec]" (double), size is 126 (1.008 kB)
+	p_ab[kinetic] "p_ab[kinetic]" (double), size is 0
+	p_ab[total] "p_ab[total]" (double), size is 126 (1.008 kB)
+	p_a[bond] "p_a[bond]" (double), size is 126 (1.008 kB)
+	p_a[angle] "p_a[angle]" (double), size is 126 (1.008 kB)
+	p_a[dih] "p_a[dih]" (double), size is 126 (1.008 kB)
+	p_a[vdw14] "p_a[vdw14]" (double), size is 126 (1.008 kB)
+	p_a[elec14] "p_a[elec14]" (double), size is 126 (1.008 kB)
+	p_a[vdw] "p_a[vdw]" (double), size is 126 (1.008 kB)
+	p_a[elec] "p_a[elec]" (double), size is 126 (1.008 kB)
+	p_a[kinetic] "p_a[kinetic]" (double), size is 0
+	p_a[total] "p_a[total]" (double), size is 126 (1.008 kB)
+	p_b[bond] "p_b[bond]" (double), size is 126 (1.008 kB)
+	p_b[angle] "p_b[angle]" (double), size is 126 (1.008 kB)
+	p_b[dih] "p_b[dih]" (double), size is 126 (1.008 kB)
+	p_b[vdw14] "p_b[vdw14]" (double), size is 126 (1.008 kB)
+	p_b[elec14] "p_b[elec14]" (double), size is 126 (1.008 kB)
+	p_b[vdw] "p_b[vdw]" (double), size is 126 (1.008 kB)
+	p_b[elec] "p_b[elec]" (double), size is 126 (1.008 kB)
+	p_b[kinetic] "p_b[kinetic]" (double), size is 0
+	p_b[total] "p_b[total]" (double), size is 126 (1.008 kB)
+    Total data set memory usage is at least 48.384 kB
+
+DATAFILES (2 total):
+  pw_distal_anchor.dat (Standard Data File):  e_ab[bond] e_ab[angle] e_ab[dih] e_ab[vdw14] ... e_b[vdw] e_b[elec] e_b[kinetic] e_b[total]
+  pw_prox_408.dat (Standard Data File):  p_ab[bond] p_ab[angle] p_ab[dih] p_ab[vdw14] ... p_b[vdw] p_b[elec] p_b[kinetic] p_b[total]
+Warning: Set 'e_ab[kinetic]' contains no data.
+Warning: Set 'e_a[kinetic]' contains no data.
+Warning: Set 'e_b[kinetic]' contains no data.
+Warning: Set 'p_ab[kinetic]' contains no data.
+Warning: Set 'p_a[kinetic]' contains no data.
+Warning: Set 'p_b[kinetic]' contains no data.
+
+RUN TIMING:
+TIME:		Init               : 0.0000 s (  0.01%)
+TIME:		Trajectory Process : 0.3998 s ( 98.69%)
+TIME:		Action Post        : 0.0001 s (  0.02%)
+TIME:		Analysis           : 0.0000 s (  0.00%)
+TIME:		Data File Write    : 0.0052 s (  1.27%)
+TIME:		Other              : 0.0000 s (  0.00%)
+TIME:	Run Total 0.4051 s
+---------- RUN END ---------------------------------------------------
+TIME: Total execution time: 0.4526 seconds.
+--------------------------------------------------------------------------------
+To cite CPPTRAJ use:
+Daniel R. Roe and Thomas E. Cheatham, III, "PTRAJ and CPPTRAJ: Software for
+  Processing and Analysis of Molecular Dynamics Trajectory Data". J. Chem.
+  Theory Comput., 2013, 9 (7), pp 3084-3095.
+

@@ -1,0 +1,21 @@
+# tleap for exp-G ternary complex (pass 1: solvate only, count waters)
+source leaprc.protein.ff14SB
+source leaprc.gaff2
+source leaprc.water.tip3p
+loadAmberParams frcmod.ionsjc_tip3p
+loadAmberParams lya_link.frcmod
+loadAmberParams lya_link_c8.frcmod
+
+LNK = loadMol2 lnk_2oeg_fa3.mol2
+prot = loadPdb complex_ecd_pep_hsa.pdb
+complex = combine { prot LNK }
+
+# deprotonate Lys26 NZ, form NZ-C11 amide bond
+remove complex complex.699.HZ1
+remove complex complex.699.HZ2
+remove complex complex.699.HZ3
+bond complex.699.NZ complex.709.C11
+
+solvateBox complex TIP3PBOX 12.0
+saveAmberParm complex complex_nosalt.prmtop complex_nosalt.inpcrd
+quit

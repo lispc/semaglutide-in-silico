@@ -1,0 +1,5 @@
+parm ../com_dry.prmtop
+trajin c16_monoacid_rep3_dry.nc
+energy e_ab (:583@C1X,O1D,O2D)|(:346,483) out pw_distal_anchor.dat
+energy e_a  :583@C1X,O1D,O2D out pw_distal_anchor.dat
+energy e_b  :346,483 out pw_distal_anchor.dat

@@ -104,13 +104,14 @@ Planned aggregate sampling: ~47 µs across 35+ systems (4× RTX 3090).
 
 ## Current Status
 
-Last major update: 2026-07-17
+Last major update: 2026-07-24
 
 | Item | Status | Notes |
 |------|--------|-------|
 | Phase 0 infrastructure | ✅ Complete | ff14SB + GAFF2 + TIP3P pipeline; Aib parameterization; GROMACS/OpenMM cross-checks |
 | exp-A (DPP-4) | ✅ Complete (1 replica) | Aib8 double-methyl consistently pushes the peptide away from the DPP-4 active site; formal criterion (WT ≤3.5 Å) not met — conclusions are relative. MM-PBSA done (2026-07-19): global ΔΔG opposite to expected sign (artifact-dominated, recorded as a negative result); P2-site decomposition supports the local desolvation penalty (+3.1/+3.4 kcal/mol) |
-| exp-C (HSA acyl chain) | ✅ Complete + MM-GBSA | Free FAs anchor FA3 via distal-carboxyl double salt bridge (ARG346+ARG483, matching Liu 2025); MM-GBSA (2026-07-20): di-acid beats mono-acid (ΔΔG = −10.8 ± 2.6 GB / −18.5 ± 4.8 PB kcal/mol, p≈0.03) via second salt bridge to ARG408; attached linker still drives tail escape (hydrophilic OEG) |
+| exp-C (HSA acyl chain) | ✅ Complete + MM-GBSA + chain series | Free FAs anchor FA3 via distal-carboxyl double salt bridge (ARG346+ARG483, matching Liu 2025); MM-GBSA (2026-07-20): di-acid beats mono-acid (ΔΔG = −10.8 ± 2.6 GB / −18.5 ± 4.8 PB kcal/mol, p≈0.03) via second salt bridge to ARG408; attached linker still drives tail escape (hydrophilic OEG). Chain-length series (2026-07-24): C12–C22 di-acids ×3 replicas + MM-GBSA U-curve — C18 sits in the top cluster (GB −87.4) but is not uniquely optimal (C22 strongest at −93.2, within method error); C16 di-acid is a consistent local minimum; FAH residue contribution grows monotonically with chain length |
+| exp-G (HSA/receptor competition) | 🔄 Running (2/3 replicas) | First ternary system (HSA + semaglutide + ECD, ~142k atoms, FA3 pre-anchored): pilot 20 ns shows the linker accelerates FA3 undocking ~100× (~2 ns), yet the tail stays on the HSA surface (2.53 ± 0.14 Å) while the peptide stays locked on ECD (1.34 ± 0.03 Å) — direct evidence that γGlu-2×OEG lets one molecule hold albumin and receptor simultaneously |
 | exp-D (linker) | ✅ Complete + stats + MM-GBSA | First statistical test (correlated t-test, 2026-07-19): linker-vs-no-linker effect significant (−1.1 Å, p≈1e-5); OEG-length differences only 0.2–0.3 Å and do not order like Lau Table 3 potency — old preliminary claims not replicated. MM-GBSA (2026-07-20) confirms: only the linker/no-linker contrast is robust; length ordering mismatches potency; Spearman with EC50 positive but underpowered (n=4) |
 | exp-F membrane system | ✅ Complete (1 replica) | GROMACS 200 ns + OpenMM 224 ns cross-validation; membrane stabilizes the receptor (protein CA RMSD 8.7 / 4.7 Å per engine vs ~32 Å without membrane); acyl tail stays in water (40.6–42.6 Å from membrane center, zero lipid contacts) |
 | exp-F minimal ECD model | ✅ Complete (1 replica) | 99.3 ns; internal RMSDs stable (ECD 1.4 Å, peptide 2.7 Å), but HSA never approaches the acyl tail (COM ~109 Å) — HSA/receptor competition not yet observed |
@@ -157,15 +158,17 @@ Production protocols:
 
 5. **Statistical rigor is being added incrementally** — `common/lib/stats.py` provides Geyer IACT-based effective sample sizes, replica CV and correlated t-tests; n_eff/CV reporting is wired into the exp-A/exp-D analyses, but formal t-tests between conditions have not yet been run.
 
+6. **Chain-length optimality is a plateau, not a sharp optimum (exp-C chain series, 2026-07-24)** — MM-GBSA over C12–C22 di-acids (3 replicas each, true carbon counts after the naming erratum) shows binding strengthens from C12 (−71.3 GB kcal/mol) into a top cluster spanning C18–C22 (−87.4 … −93.2), with C16 a consistent local minimum in both GB and PB; per-residue decomposition attributes the trend to monotonically growing FAH-pocket contributions (−13.4 → −29.6 kcal/mol). Semaglutide's C18 di-acid is therefore "safely inside the optimal cluster" rather than a unique energy minimum — the choice plausibly also reflects synthesis, solubility and receptor-activity constraints. Di-acid beats mono-acid at equal length (C16: −76.2 vs −70.5 GB), and the γGlu-2×OEG linker lets the ternary complex (exp-G pilot) keep the fatty-acid tail on the HSA surface while the peptide stays bound to the receptor ECD.
+
 ---
 
 ## Known Limitations
 
 The project is intentionally transparent about what has **not** yet been demonstrated:
 
-- **No single system contains peptide + linker + C18 di-acid + receptor + HSA simultaneously.** exp-C lacks receptor; exp-D lacks HSA; exp-F lacks HSA. The central competition between albumin anchoring and receptor binding is therefore observed only partially.
+- **The full competition system exists only as exp-G (running).** exp-C lacks receptor; exp-D lacks HSA; exp-F lacks HSA. exp-G (HSA + peptide-linker-FA + ECD, FA3 pre-anchored) closes this gap — pilot + 2/3 production replicas done as of 2026-07-24 — but its residence-partition analysis is still pending, so the competition is not yet quantified across replicas.
 - **Sampling is below the original roadmap target** for exp-C and exp-D (100 ns achieved vs 300–500 ns planned). Slow degrees of freedom may not be converged; conclusions are labelled preliminary.
-- **MM-GBSA is now delivered for exp-A/C/D** (exp-A: negative result; exp-C: di-acid > mono-acid, ΔΔG = −10.8/−18.5 kcal/mol; exp-D: only the linker/no-linker contrast is robust, consistent with the t-test). **Chain-length naming erratum (2026-07-20)**: the legacy "C18" free-FA controls are actually C19 monoacid / C20 diacid (original scripts named chains by CH₂ count); the mono-vs-diacid conclusion is unaffected, and true C18 diacid + C16 monoacid trajectories are being run.
+- **MM-GBSA is now delivered for exp-A/C/D** (exp-A: negative result; exp-C: di-acid > mono-acid, ΔΔG = −10.8/−18.5 kcal/mol; exp-D: only the linker/no-linker contrast is robust, consistent with the t-test). **Chain-length naming erratum (2026-07-20)**: the legacy "C18" free-FA controls are actually C19 monoacid / C20 diacid (original scripts named chains by CH₂ count); the mono-vs-diacid conclusion is unaffected. The follow-up chain-length series (true C12/C14/C16/C18/C20/C22 di-acids + C16 monoacid, 3 replicas each) completed MD on 2026-07-24 with MM-GBSA U-curve delivered (`exps/exp-C/analysis/mmgbsa/chain-series/`); the final c18true replica 3 point is still being computed.
 - **Ensemble inconsistency**: exp-A used NVT production; exp-C/D used NPT production. Cross-experiment energy comparisons must account for ~2% density differences.
 - **Statistical pipeline is still being wired in**: early analyses reported mean±std without autocorrelation correction; this is being retrofitted via `common/lib/stats.py`.
 

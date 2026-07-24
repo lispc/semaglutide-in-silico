@@ -1,0 +1,5 @@
+parm ../../../../../tleap/c16_diacid.prmtop
+trajin ../../../../../md/c16_diacid/rep3/c16_diacid_traj.dcd 502 1003 4
+autoimage
+strip :WAT,Na+,Cl-
+trajout c16_diacid_rep3_dry.nc netcdf nobox

@@ -234,3 +234,10 @@ exps/exp-F/minimal_model/build_ecd_v2_test*.log
 exps/exp-F/minimal_model/check_charge*
 exps/exp-F/minimal_model/md/
 reference.frc
+
+# MM-GBSA dry trajectories / vendored deps / generated solvated PDBs
+*.nc
+exps/exp-A/analysis/mmpbsa/vendor/
+exps/*/tleap/*_solvated.pdb
+exps/*/md/*/log.txt
+exps/exp-G/tleap/*.pdb
