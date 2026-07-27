@@ -40,13 +40,13 @@
 
 ## Phase 4: 全量分析
 
-- [ ] **4.0** MM-GBSA 结合自由能（所有体系，最后 100 ns）
-- [ ] **4.1** ΔG_bind vs 链长曲线（核心图表）
-- [ ] **4.2** 双羧基锚定 occupancy 定量
-- [ ] **4.3** Per-residue 能量分解（linker vs FA vs 远端羧基）
+- [x] **4.0** MM-GBSA 结合自由能（所有体系，最后 50 ns × 3 rep，GB+PB）——2026-07-24 链长系列 21 case 全齐
+- [x] **4.1** ΔG_bind vs 链长曲线（`analysis/mmgbsa/chain-series/U_curve.png`，n=3 终稿）：C18 近最优但非唯一最优
+- [x] **4.2** 双羧基锚定 occupancy 定量（各 rep `pw_distal_anchor.dat` / `pw_prox_408.dat`）
+- [x] **4.3** Per-residue 能量分解（FINAL_DECOMP：FAH 贡献随链长单调 −13.4→−29.6 kcal/mol）
 - [ ] **4.4** 与 Liu 2025 的 -75.33 kcal/mol 方法学交叉验证
 - [ ] **4.5** 与游离 FA 基线对比（linker 的定位贡献）
-- [ ] **4.6** 综合图表
+- [x] **4.6** 综合图表（U_curve.png 双 panel）
 
 ## 已知风险
 

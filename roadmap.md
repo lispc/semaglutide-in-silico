@@ -295,7 +295,7 @@ Aib8,Arg34-GLP-1(Lys26-脂链)
 
 ### 待启动
 
-exp-E (SAR 复现，前置条件未满足：exp-A 多 replica)；exp-F/exp-A replica 2/3；exp-D MM-GBSA（exp-A/C 已完成）
+exp-E (SAR 复现，前置条件未满足：exp-A 多 replica)；exp-F/exp-A replica 2/3（exp-A/C/D 的 MM-GBSA 均已完成）
 
 ### 能力边界与方法学一致性（2026-06-06 补充）
 

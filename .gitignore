@@ -241,3 +241,15 @@ exps/exp-A/analysis/mmpbsa/vendor/
 exps/*/tleap/*_solvated.pdb
 exps/*/md/*/log.txt
 exps/exp-G/tleap/*.pdb
+
+# exp-A MM-PBSA pipeline dev intermediates (regenerable test artifacts)
+exps/exp-A/analysis/mmpbsa/**/test_*.dat
+exps/exp-A/analysis/mmpbsa/**/dcat.dat
+exps/exp-A/analysis/mmpbsa/**/dcom.dat
+exps/exp-A/analysis/mmpbsa/**/e_frame1.dat
+exps/exp-A/analysis/mmpbsa/**/e_min.dat
+exps/exp-A/analysis/mmpbsa/**/lie.in
+exps/exp-A/analysis/mmpbsa/**/paire.in
+exps/exp-A/analysis/mmpbsa/**/mmpbsa_test.in
+exps/exp-A/analysis/mmpbsa/**/check.cpptraj
+exps/exp-A/analysis/mmpbsa/**/FINAL_DECOMP.csv
