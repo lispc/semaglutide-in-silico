@@ -421,3 +421,28 @@ c16_monoacid rep1/2/3（MD 全部完成）与 c18true_diacid rep1/2（rep3 仍�
 ---
 *维护者：Kimi Code*
 *最后更新：2026-07-24*
+
+## 2026-07-24 — c18true rep3 迁移 GPU 3 → GPU 0（续跑）
+
+- 背景：链长系列收尾后 GPU 0-2 空闲，而 c18true rep3 与 exp-G rep3 仍共享 GPU 3（70 vs 66 ns/d）
+- 操作：kill 原进程（37.51M 步 checkpoint），既有 traj/log 改名 `*_part1.*`（run_md.py 的 DCD/StateData reporter 默认 append=False，同目录重启会截断），随后以 `--restart c18true_diacid_checkpoint.chk --nsteps 12600000` 在 GPU 0 续跑（setsid nohup，日志 `md_output_restart.log`）
+- 验证：新 log 首行 step=37,510,000 / t=75.02 ns（绝对计数无缝），速度 184 ns/d；终点 50.11M 步 = 100.22 ns
+- 下游注意：rep3 轨迹分两段（part1 ~75 ns + 续段 ~25 ns），MM-GBSA 抽帧时 cpptraj 需按顺序读入两个 DCD
+
+## 2026-07-24(晚) — c18true_diacid rep3 补齐，链长系列全 n=3 收官
+
+rep3 MD 于 20:59 完成（100.22 ns，无 NaN；当天曾因换 GPU 重启，轨迹分两段）。按链长系列同一协议补算 MM-GBSA：
+
+- **拼接取帧**：`c18true_diacid_traj_part1.dcd`（750 帧）帧 502–750 step 4 + 续段 `c18true_diacid_traj.dcd`（252 帧）全部 step 4 → 126 帧，对应拼接后 100.22 ns 的最后 50 ns，与其余 20 个 case 区间一致
+- 锚点校验：远端–ARG483/346 = 2.74/2.72 Å、近端–最近 Arg = 2.82±0.30 Å，全部稳定；成对静电 远端 −229.9 / 近端–ARG408 −104.1（与 rep1/2 一致）
+- **rep3 结果：GB −84.38 ± 6.88 / PB −52.58 ± 9.78**（1 case × 14 ranks，~40 min，exit 0）
+
+**c18true n=3 汇总：GB −86.39 ± 2.86 / PB −54.93 ± 3.04**（n=2 时 −87.40±3.21 / −56.10±3.19；rep3 为三个 rep 中最弱，均值上移 ~1.0–1.2）
+
+- **结论无变化**：C18 仍居 GB 顶部簇（与 C20 差 2–3，噪声内）但非唯一最优——C22（−93.2±1.0）仍最强（差 6.8）；PB 顶部簇格局不变（最优 C14 −57.9，C18 −54.9 在簇内）。n=2 → n=3 仅数值微调，"近最优而非唯一最优"的判定不变
+- U_curve.png 已重画（C18 去除 n=2 星标）；RESULTS-chain-series.md 全部表格更新为 n=3（含逐 rep、锚点/分解：c18true FAH GB TDC −22.28，链长单调趋势 c16 −20.3 < c18 −22.3 < c20 −25.5 < c22 −29.6 保持）
+- 至此链长系列 21 个 case（7 体系 × 3 rep）全部完成；全程 CPU，未动 GPU 任务
+
+---
+*维护者：Kimi Code*
+*最后更新：2026-07-24*

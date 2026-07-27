@@ -1,0 +1,6 @@
+parm ../../../../../tleap/c18true_diacid.prmtop
+trajin ../../../../../md/c18true_diacid/rep3/c18true_diacid_traj_part1.dcd 502 last 4
+trajin ../../../../../md/c18true_diacid/rep3/c18true_diacid_traj.dcd 1 last 4
+autoimage
+strip :WAT,Na+,Cl-
+trajout c18true_diacid_rep3_dry.nc netcdf nobox

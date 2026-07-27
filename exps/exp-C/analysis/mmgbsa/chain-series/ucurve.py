@@ -68,7 +68,7 @@ def system_stats(sysdir, reps):
 # --- collect all points ---
 points = []  # (series, carbon, system_label, stats)
 DI = [("c12_diacid", 12, [1,2,3]), ("c14_diacid", 14, [1,2,3]), ("c16_diacid", 16, [1,2,3]),
-      ("c18true_diacid", 18, [1,2]), ("c20_diacid", 20, [1,2,3]), ("c22_diacid", 22, [1,2,3])]
+      ("c18true_diacid", 18, [1,2,3]), ("c20_diacid", 20, [1,2,3]), ("c22_diacid", 22, [1,2,3])]
 for s, c, reps in DI:
     points.append(("diacid", c, s, system_stats(os.path.join(BASE, s), reps)))
 # legacy c18_diacid = C20 (physically same molecule as c20_diacid)
@@ -107,7 +107,7 @@ for ax, m, title in [(axes[0], "GB", "MM-GBSA (igb=5)"), (axes[1], "PB", "MM-PBS
     ax.set_xticks([12, 14, 16, 18, 20, 22])
     ax.grid(alpha=0.3)
     ax.legend(fontsize=8, loc="lower left" if m == "GB" else "upper left")
-fig.suptitle("exp-C chain series @ HSA FA3 (last 50 ns ×3 reps; *=n=2, rep3 pending)", fontsize=9)
+fig.suptitle("exp-C chain series @ HSA FA3 (last 50 ns, 3 reps per system)", fontsize=9)
 fig.tight_layout(rect=[0, 0, 1, 0.96])
 fig.savefig(os.path.join(BASE, "U_curve.png"), dpi=160)
 print("\nsaved U_curve.png")

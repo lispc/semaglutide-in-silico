@@ -267,7 +267,7 @@ Aib8,Arg34-GLP-1(Lys26-脂链)
 
 ---
 
-## 项目当前进度 (2026-07-24)
+## 项目当前进度 (2026-07-25)
 
 ### 已完成
 
@@ -281,11 +281,11 @@ Aib8,Arg34-GLP-1(Lys26-脂链)
 | **exp-F ECD v2** | ✓ 完成（1 replica） | 最小功能模型 99.3 ns 完成。内部 RMSD 稳定（ECD 1.4 Å、肽 2.7 Å、Lys-LNK 键 1.39 Å），但 HSA 与脂链从未接近（COM ~109 Å）——HSA-受体竞争未观测到 |
 | **ECD v2 构建** | ✓ 完成 | HSA N-domain + 肽 + ECD + Linker (~145k atoms)。关键修复：跳过 H 原子避免 NGLY 模板冲突、tleap 显式 bond Lys26-LNK |
 
-### 进行中
+### 已完成（exp-G）
 
 | 实验 | 状态 | 详情 |
 |------|:---:|------|
-| **exp-G**（HSA–受体竞争三元体系） | 🔄 2/3 replica 完成 | 首个同时含 HSA+司美格鲁肽+ECD 的体系（141,880 原子，FA3 预锚定）。pilot 20 ns：linker 使 FA3 解锚加速 ~100×（~2 ns 松脱），但尾羧基保持 HSA 表面接触（2.53±0.14 Å）、肽全程锁定 ECD（1.34±0.03 Å）——桥接构型为稳态。production rep1/rep2 各 100 ns 已完成，rep3 运行中；驻留分区分析（FA3口袋/表面/水相）待 3 replica 齐后统一做。详见 `exps/exp-G/README.md` 与 `exp-log.md` |
+| **exp-G**（HSA–受体竞争三元体系） | ✓ 完成（3×100 ns + 驻留分区分析） | 首个同时含 HSA+司美格鲁肽+ECD 的体系（141,880 原子，FA3 预锚定）。驻留分区（2026-07-25）：尾羧基 FA3 口袋 20%/HSA 表面 45%/过渡 29%/水相 5%——**FA3 是快速交换驻留区**（rep1 交换 346 次不逃离，rep2/3 分别 3.9/2.5 ns 脱锚）；肽-ECD 界面 2.77 Å、300 ns 零脱钩——**受体端亲和力比 HSA 端高约 2 个数量级**；近端 O38-ARG408 桥接上 linker 后不形成（0%，构建假象）。单轨迹结论在本体系不可信（pilot 仅反映 rep2/3 型）。详见 `exps/exp-G/analysis/RESULTS.md` |
 
 ### 暂停
 
@@ -303,7 +303,7 @@ exp-E (SAR 复现，前置条件未满足：exp-A 多 replica)；exp-F/exp-A rep
 
 | 边界 | 说明 | 影响 |
 |------|------|------|
-| **完整司美格鲁肽体系仅 exp-G 一例** | exp-C（HSA 端）无受体；exp-D（受体端）无 HSA。exp-G（2026-07-21 起）首次同时包含肽+linker+C18二酸+受体ECD+HSA（FA3 预锚定，141,880 原子），pilot + 2/3 production replica 已完成，但驻留分区定量分析尚未落地 | 竞争核心矛盾的直接证据目前只有 pilot 单轨迹；待 exp-G 3 replica 分析后更新此边界 |
+| **完整司美格鲁肽体系仅 exp-G 一例** | exp-C（HSA 端）无受体；exp-D（受体端）无 HSA。exp-G（2026-07-25 完成）首次同时包含肽+linker+C18二酸+受体ECD+HSA（FA3 预锚定，141,880 原子），3×100 ns 驻留分区分析已交付 | exp-G 无跨膜域/膜环境（只有 ECD），且 replica 间命运分化（1/3 持续交换、2/3 脱锚）——100 ns 尺度上的分区系数仍有较大不确定性；全受体+膜+HSA 的真正完整体系仍缺 |
 | **系综不一致** | exp-A 用 NVT production；exp-C/D 用 NPT production | 跨实验能量比较需在 Methods 中明确交代；密度差异 ~2% 为已知系统误差 |
 | **模拟量未达标** | exp-D 实际 ~100 ns（计划 500 ns）；exp-C 实际 100 ns（计划 300 ns） | 采样不足可能导致慢自由度未收敛；结论必须标注" preliminary / not statistically significant" |
 | **统计管线待升级** | 当前分析仅报 mean±std，未做自相关校正、replica CV、correlated t-test | 0.x Å 差异易被误读为"趋势"；`common/lib/stats.py` 已创建，正在接入各实验分析脚本 |
